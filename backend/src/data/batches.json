@@ -1,0 +1,91 @@
+[
+  {
+    "id": "e4f4edf1-bd48-483d-b6b9-aa9f1b9d88b8",
+    "exporterId": "777b7192-80cc-407e-bf79-b5f876141067",
+    "productType": "Rice",
+    "variety": "idly samba rice",
+    "quantity": 1000,
+    "unit": "kg",
+    "originCountry": "India",
+    "destinationCountry": "USA",
+    "harvestDate": "2025-11-05",
+    "notes": "",
+    "status": "CERTIFIED",
+    "docs": [
+      {
+        "id": "05d88032-539e-45ae-a1ec-ad213be34b18",
+        "originalName": "Screenshot 2025-10-31 234821.png",
+        "mimeType": "image/png",
+        "size": 228912,
+        "path": "1763372621821-487632899.png",
+        "url": "/uploads/1763372621821-487632899.png",
+        "uploadedAt": "2025-11-17T09:43:41.839Z"
+      },
+      {
+        "id": "bd4ca00a-d639-4d64-9815-d9e264b2ab40",
+        "originalName": "Screenshot 2025-10-31 233718.png",
+        "mimeType": "image/png",
+        "size": 371185,
+        "path": "1763372621826-445370609.png",
+        "url": "/uploads/1763372621826-445370609.png",
+        "uploadedAt": "2025-11-17T09:43:41.839Z"
+      }
+    ],
+    "history": [
+      {
+        "id": "07991752-5bcf-426e-b21e-21c2f62e6b29",
+        "status": "SUBMITTED",
+        "message": "Batch submitted by exporter",
+        "createdAt": "2025-11-17T09:43:41.839Z"
+      },
+      {
+        "id": "81f559cd-98fd-4ad8-b2d0-8b26e9bbfcf8",
+        "status": "CERTIFIED",
+        "message": "Credential issued by AgriQCert HQ",
+        "createdAt": "2025-11-17T09:59:14.255Z"
+      }
+    ],
+    "createdAt": "2025-11-17T09:43:41.839Z",
+    "updatedAt": "2025-11-17T09:59:14.255Z"
+  },
+  {
+    "id": "dbf32055-df9c-4580-9498-d26955c433f4",
+    "exporterId": "777b7192-80cc-407e-bf79-b5f876141067",
+    "productType": "dfghfg",
+    "variety": "dgfhf",
+    "quantity": 1000,
+    "unit": "kg",
+    "originCountry": "dgfhf",
+    "destinationCountry": "dghf",
+    "harvestDate": "2025-11-17",
+    "notes": "dhffhd",
+    "status": "CERTIFIED",
+    "docs": [
+      {
+        "id": "aedddc3c-4c54-4f2d-a77d-d64eb3b1da16",
+        "originalName": "Screenshot 2025-11-10 125045.png",
+        "mimeType": "image/png",
+        "size": 200701,
+        "path": "1763374405366-492940174.png",
+        "url": "/uploads/1763374405366-492940174.png",
+        "uploadedAt": "2025-11-17T10:13:25.378Z"
+      }
+    ],
+    "history": [
+      {
+        "id": "920f5d53-829b-4b80-acae-da78f9d59f61",
+        "status": "SUBMITTED",
+        "message": "Batch submitted by exporter",
+        "createdAt": "2025-11-17T10:13:25.378Z"
+      },
+      {
+        "id": "a4533b41-537e-4599-b499-3c46e7001116",
+        "status": "CERTIFIED",
+        "message": "Credential issued by AgriQCert HQ",
+        "createdAt": "2025-11-17T10:13:29.278Z"
+      }
+    ],
+    "createdAt": "2025-11-17T10:13:25.378Z",
+    "updatedAt": "2025-11-17T10:13:29.278Z"
+  }
+]

@@ -1,0 +1,32 @@
+node_modules
+frontend/node_modules
+backend/node_modules
+
+# logs
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# env files
+.env
+.env.local
+backend/.env
+backend/.env.local
+frontend/.env
+frontend/.env.local
+
+# generated data
+backend/data/*.json
+!backend/data/README.md
+backend/uploads
+
+# build outputs
+dist
+frontend/dist
+coverage
+
+# os/editor files
+.DS_Store
+Thumbs.db
+.vscode/
+

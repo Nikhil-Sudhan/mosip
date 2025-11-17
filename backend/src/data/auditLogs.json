@@ -1,0 +1,14 @@
+[
+  {
+    "id": "1763379521578-665261",
+    "action": "template.created",
+    "userId": "777b7192-80cc-407e-bf79-b5f876141067",
+    "role": "ADMIN",
+    "entityType": "TEMPLATE",
+    "entityId": "b66ffec7-0427-45e6-a010-0db3c7ca642e",
+    "metadata": {
+      "name": "Digital Product Passport"
+    },
+    "createdAt": "2025-11-17T11:38:41.578Z"
+  }
+]

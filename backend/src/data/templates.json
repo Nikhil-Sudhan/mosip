@@ -1,0 +1,27 @@
+[
+  {
+    "id": "dpp-v1",
+    "name": "Digital Product Passport",
+    "description": "Standard MOSIP-aligned passport for agricultural commodities",
+    "schemaUrl": "https://mosip.io/dpp/schema/v1",
+    "fields": [
+      "product.name",
+      "product.quantity",
+      "inspection.moisturePercent"
+    ],
+    "createdAt": "2025-11-17T11:37:16.496Z"
+  },
+  {
+    "id": "b66ffec7-0427-45e6-a010-0db3c7ca642e",
+    "name": "Digital Product Passport",
+    "description": "Standard template for agri exports",
+    "schemaUrl": "https://mosip.io/dpp/schema/v1",
+    "fields": [
+      "product.name",
+      "product.quantity",
+      "inspection.moisturePercent"
+    ],
+    "createdBy": "777b7192-80cc-407e-bf79-b5f876141067",
+    "createdAt": "2025-11-17T11:38:41.574Z"
+  }
+]

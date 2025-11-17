@@ -1,0 +1,12 @@
+[
+  {
+    "id": "777b7192-80cc-407e-bf79-b5f876141067",
+    "email": "admin@agriqcert.test",
+    "passwordHash": "$2b$10$9ht4gQNiry5x.19TB4Aw/.Zg2Gn9Wo52K5TW.VvnXi8VpUaep7p4O",
+    "role": "ADMIN",
+    "organization": "AgriQCert HQ",
+    "isActive": true,
+    "createdAt": "2025-11-17T08:52:18.494Z",
+    "updatedAt": "2025-11-17T08:52:18.494Z"
+  }
+]
