@@ -36,7 +36,11 @@ The first run also seeds a default admin:
 - Email: `admin@agriqcert.test`
 - Password: `Admin@123`
 
-Change this password immediately after logging in by creating a new admin user, then disabling the default one (future milestone).
+**New Default Agency Admin**:
+- Email: `admin@gmail.com`
+- Password: `admin`
+
+Change these passwords immediately after logging in by creating new admin users, then disabling the default ones (future milestone).
 
 ## Available Endpoints
 
@@ -52,13 +56,25 @@ Base URL: `http://localhost:4000/api`
    ```
    POST /auth/login
    {
-     "email": "admin@agriqcert.test",
-     "password": "Admin@123"
+     "email": "admin@gmail.com",
+     "password": "admin"
    }
    ```
    Response returns `accessToken`, `refreshToken`, and the sanitized user object.
 
-2. **Refresh token**
+2. **Register** (Public - Importers/Exporters only)
+   ```
+   POST /auth/create-account
+   {
+     "email": "exporter@example.com",
+     "password": "SecurePass123",
+     "role": "EXPORTER",  // or "IMPORTER"
+     "organization": "Farm Co."
+   }
+   ```
+   Response returns `accessToken`, `refreshToken`, and the new user object. Password must be at least 8 characters.
+
+3. **Refresh token**
    ```
    POST /auth/refresh
    {
@@ -66,7 +82,7 @@ Base URL: `http://localhost:4000/api`
    }
    ```
 
-3. **Logout**
+4. **Logout**
    ```
    POST /auth/logout
    {
@@ -141,14 +157,30 @@ Authenticated exporters (and admins) can manage their batches:
      "pesticidePPM": 0.02,
      "organicStatus": "India Organic",
      "isoCode": "ISO 22000",
-     "result": "PASS",
+     "result": "PASS",  // or "FAIL"
      "notes": "Meets export spec"
    }
    ```
+   **Status Updates**:
+   - `result: "PASS"` → Batch status becomes `INSPECTED` (ready for credential)
+   - `result: "FAIL"` → Batch status becomes `REJECTED` (cannot receive credential)
 
 ### Verifiable Credentials & Templates
 
 1. `POST /vc/:batchId/issue` (QA/Admin) → Generates the Digital Product Passport (W3C VC + QR image), updates batch status to `CERTIFIED`, logs audit + verification URLs.
+   
+   **Validation Rules**:
+   - Batch must have status `INSPECTED`
+   - Inspection result must be `PASS`
+   - Batch cannot be `REJECTED`
+   - Credential cannot already be issued for this batch
+   
+   **Error Responses**:
+   - `400 BATCH_NOT_INSPECTED` - Batch must be inspected before credential issuance
+   - `400 INSPECTION_NOT_PASSED` - Batch inspection must pass
+   - `400 BATCH_REJECTED` - Cannot issue credential for rejected batch
+   - `400 CREDENTIAL_ALREADY_ISSUED` - Credential already exists for this batch
+
 2. `GET /vc/:batchId` → Download VC JSON/metadata (Exporter/QA/Admin).
 3. `POST /vc/:batchId/revoke` (Admin) → Mark credential revoked with optional reason.
 4. `GET /vc/templates` (QA/Admin) → List configured VC templates.

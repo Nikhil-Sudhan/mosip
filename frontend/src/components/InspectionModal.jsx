@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import Button from './Button';
 
@@ -13,6 +13,7 @@ export default function InspectionModal({
     register,
     handleSubmit,
     reset,
+    watch,
     formState: { errors },
   } = useForm({
     defaultValues: {
@@ -24,6 +25,8 @@ export default function InspectionModal({
       notes: '',
     },
   });
+
+  const result = watch('result');
 
   useEffect(() => {
     if (batch?.inspection) {
@@ -119,11 +122,20 @@ export default function InspectionModal({
             <span className="font-medium">Result</span>
             <select
               {...register('result')}
-              className="rounded-md border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className={`rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 ${
+                result === 'FAIL' 
+                  ? 'border-red-300 bg-red-50' 
+                  : 'border-slate-200'
+              }`}
             >
               <option value="PASS">PASS</option>
               <option value="FAIL">FAIL</option>
             </select>
+            {result === 'FAIL' && (
+              <p className="text-xs text-red-600 font-medium mt-1">
+                ⚠️ Batch will be rejected and cannot receive a credential
+              </p>
+            )}
           </label>
           <label className="flex flex-col gap-1 text-sm text-slate-600 md:col-span-2">
             <span className="font-medium">Notes</span>

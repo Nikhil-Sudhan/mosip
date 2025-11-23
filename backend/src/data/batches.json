@@ -144,5 +144,52 @@
     ],
     "createdAt": "2025-11-23T12:12:08.750Z",
     "updatedAt": "2025-11-23T12:12:30.791Z"
+  },
+  {
+    "id": "233e5a33-9bb3-4a58-b2b3-cdc9404501a7",
+    "exporterId": "bba5944e-8462-42d7-a55a-195a9889d0c6",
+    "productType": "Rice",
+    "variety": "idly samba rice",
+    "quantity": 1000,
+    "unit": "kgffdsf",
+    "originCountry": "sdfsdf",
+    "destinationCountry": "sfdsdf",
+    "harvestDate": "2025-11-16",
+    "notes": "sdfdsf",
+    "status": "CERTIFIED",
+    "docs": [],
+    "inspection": {
+      "moisturePercent": 11.3,
+      "pesticidePPM": 0.05,
+      "organicStatus": "India Organic Certified",
+      "isoCode": "ISO 22000",
+      "result": "PASS",
+      "notes": "",
+      "inspectorId": "admin-gmail-user-id-12345",
+      "inspectorOrg": "Agency",
+      "recordedAt": "2025-11-23T12:23:52.031Z"
+    },
+    "history": [
+      {
+        "id": "5b5fe140-ca61-4527-b8a0-34449ce7e869",
+        "status": "SUBMITTED",
+        "message": "Batch submitted by exporter",
+        "createdAt": "2025-11-23T12:23:30.662Z"
+      },
+      {
+        "id": "5d61737c-3905-428b-b2c7-633d4d97c262",
+        "status": "INSPECTED",
+        "message": "Inspection recorded (PASS)",
+        "createdAt": "2025-11-23T12:23:52.031Z"
+      },
+      {
+        "id": "2c109880-33f9-4d50-bf09-6789f3cf6b35",
+        "status": "CERTIFIED",
+        "message": "Credential issued by Agency",
+        "createdAt": "2025-11-23T12:23:54.977Z"
+      }
+    ],
+    "createdAt": "2025-11-23T12:23:30.662Z",
+    "updatedAt": "2025-11-23T12:23:54.977Z"
   }
 ]

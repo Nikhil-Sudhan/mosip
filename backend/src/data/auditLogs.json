@@ -46,5 +46,41 @@
       "batchId": "09d73fae-1706-4114-9da0-fc625695989c"
     },
     "createdAt": "2025-11-23T12:12:30.793Z"
+  },
+  {
+    "id": "1763900610664-414614",
+    "action": "batch.submitted",
+    "userId": "bba5944e-8462-42d7-a55a-195a9889d0c6",
+    "role": "EXPORTER",
+    "entityType": "BATCH",
+    "entityId": "233e5a33-9bb3-4a58-b2b3-cdc9404501a7",
+    "metadata": {
+      "productType": "Rice"
+    },
+    "createdAt": "2025-11-23T12:23:30.664Z"
+  },
+  {
+    "id": "1763900632033-759079",
+    "action": "inspection.recorded",
+    "userId": "admin-gmail-user-id-12345",
+    "role": "ADMIN",
+    "entityType": "BATCH",
+    "entityId": "233e5a33-9bb3-4a58-b2b3-cdc9404501a7",
+    "metadata": {
+      "result": "PASS"
+    },
+    "createdAt": "2025-11-23T12:23:52.033Z"
+  },
+  {
+    "id": "1763900634979-863626",
+    "action": "credential.issued",
+    "userId": "admin-gmail-user-id-12345",
+    "role": "ADMIN",
+    "entityType": "CREDENTIAL",
+    "entityId": "67815fc4-a8d1-4c71-b0b2-f13301ceb7a2",
+    "metadata": {
+      "batchId": "233e5a33-9bb3-4a58-b2b3-cdc9404501a7"
+    },
+    "createdAt": "2025-11-23T12:23:54.979Z"
   }
 ]

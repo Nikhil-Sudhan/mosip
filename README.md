@@ -8,10 +8,16 @@ Web portal that lets exporters submit agricultural batches, QA partners record i
 
 ## Features
 
+- **Dual Login System**: Separate login flows for Agency (Admin/QA/Customs) and Importers/Exporters
+- **User Registration**: Importers and Exporters can create accounts directly
 - Role-based dashboards for **Exporter**, **QA/Admin**, and **Customs/Importer**
+- **Batch Approval/Rejection Workflow**: 
+  - Batches must pass QA inspection before credential issuance
+  - Rejected batches cannot receive credentials
+  - Full audit trail of batch status changes
 - Batch submission with attachments + lifecycle tracker
 - QA inspection workspace with moisture/pesticide metrics
-- Digital Product Passport (W3C VC) issuance, QR code download, revocation
+- Digital Product Passport (W3C VC) issuance (only for approved batches), QR code download, revocation
 - Public Inji Verify-style page for QR scanning or JSON upload
 - Audit + verification activity logs backed by JSON stores (swap with PostgreSQL later)
 - Dockerized backend (Express) and frontend (React + Vite)
@@ -30,7 +36,19 @@ npm install
 npm run dev   # http://localhost:5173
 ```
 
-Default admin login is `admin@agriqcert.test / Admin@123`. Create exporter/QA/customs users from the admin dashboard.
+### Login Credentials
+
+**Agency Login** (Admin/QA/Customs):
+- Email: `admin@gmail.com`
+- Password: `admin`
+
+**Importers & Exporters Login**:
+- Use the registration page to create new accounts
+- Or login with existing exporter/importer credentials
+
+**Legacy Admin** (if needed):
+- Email: `admin@agriqcert.test`
+- Password: `Admin@123`
 
 ### Docker (single command)
 
@@ -49,6 +67,17 @@ frontend/  # React + Vite app with Tailwind UI
 docs/      # Architecture, API, and user-guide references
 docker-compose.yml
 ```
+
+## Batch Workflow
+
+1. **SUBMITTED** → Exporter submits batch with documents
+2. **QA Inspection** → QA/Admin records inspection results:
+   - **PASS** → Status becomes `INSPECTED` → Ready for credential issuance
+   - **FAIL** → Status becomes `REJECTED` → Cannot receive credential
+3. **Credential Issuance** → Only `INSPECTED` batches with `PASS` result can receive credentials
+4. **CERTIFIED** → Batch receives Digital Product Passport (VC) with QR code
+
+**Important**: Credentials can only be issued for batches that have passed inspection. Rejected batches are permanently blocked from credential issuance.
 
 ## Documentation
 

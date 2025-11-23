@@ -97,25 +97,34 @@ export default function BatchList({
                     >
                       View VC
                     </button>
+                  ) : batch.status === 'REJECTED' ? (
+                    <span className="text-xs text-red-600 font-semibold">Rejected</span>
                   ) : canIssue ? (
                     <>
-                      <button
-                        type="button"
-                        className="bg-gradient-to-r from-amber-400 to-orange-500 text-white px-4 py-1.5 rounded-lg hover:from-amber-500 hover:to-orange-600 shadow-md hover:shadow-lg transition-all"
-                        onClick={() => onRecordInspection?.(batch)}
-                      >
-                        Record QA
-                      </button>
-                      <button
-                        type="button"
-                        className="bg-gradient-to-r from-violet-400 to-purple-500 text-white px-4 py-1.5 rounded-lg hover:from-violet-500 hover:to-purple-600 shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                        disabled={issuingBatchId === batch.id}
-                        onClick={() => onIssueCredential?.(batch)}
-                      >
-                        {issuingBatchId === batch.id
-                          ? 'Issuing…'
-                          : 'Generate VC'}
-                      </button>
+                      {batch.status === 'SUBMITTED' && (
+                        <button
+                          type="button"
+                          className="bg-gradient-to-r from-amber-400 to-orange-500 text-white px-4 py-1.5 rounded-lg hover:from-amber-500 hover:to-orange-600 shadow-md hover:shadow-lg transition-all"
+                          onClick={() => onRecordInspection?.(batch)}
+                        >
+                          Record QA
+                        </button>
+                      )}
+                      {batch.status === 'INSPECTED' && batch.inspection?.result === 'PASS' && (
+                        <button
+                          type="button"
+                          className="bg-gradient-to-r from-violet-400 to-purple-500 text-white px-4 py-1.5 rounded-lg hover:from-violet-500 hover:to-purple-600 shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                          disabled={issuingBatchId === batch.id}
+                          onClick={() => onIssueCredential?.(batch)}
+                        >
+                          {issuingBatchId === batch.id
+                            ? 'Issuing…'
+                            : 'Generate VC'}
+                        </button>
+                      )}
+                      {batch.status === 'SUBMITTED' && (
+                        <span className="text-xs text-amber-600 font-semibold">Awaiting Inspection</span>
+                      )}
                     </>
                   ) : (
                     <span className="text-xs text-violet-500 font-semibold">Pending QA</span>

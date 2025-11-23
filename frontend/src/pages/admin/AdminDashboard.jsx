@@ -39,12 +39,20 @@ export default function AdminDashboard() {
 
   const inspectionMutation = useMutation({
     mutationFn: ({ batchId, payload }) => recordInspection(batchId, payload),
-    onSuccess: () => {
-      toast.success('Inspection saved');
+    onSuccess: (data, variables) => {
+      const result = variables.payload.result;
+      if (result === 'PASS') {
+        toast.success('Inspection passed! Batch is ready for credential issuance.');
+      } else {
+        toast.error('Inspection failed. Batch has been rejected.');
+      }
       queryClient.invalidateQueries({ queryKey: ['batches'] });
       setInspectionModal({ open: false, batch: null });
     },
-    onError: () => toast.error('Could not save inspection'),
+    onError: (error) => {
+      const message = error.response?.data?.error?.message || 'Could not save inspection';
+      toast.error(message);
+    },
   });
 
 
@@ -56,17 +64,37 @@ export default function AdminDashboard() {
       accent: 'warning',
     },
     {
+      label: 'Inspected (Ready)',
+      value: batches.filter((b) => b.status === 'INSPECTED' && b.inspection?.result === 'PASS').length,
+      accent: 'primary',
+    },
+    {
       label: 'Certificates issued',
       value: batches.filter((b) => b.status === 'CERTIFIED').length,
       accent: 'success',
     },
+    {
+      label: 'Rejected',
+      value: batches.filter((b) => b.status === 'REJECTED').length,
+      accent: 'danger',
+    },
   ];
 
   const handleIssueCredential = async (batch) => {
+    if (batch.status !== 'INSPECTED') {
+      toast.error('Batch must be inspected and pass QA before credential can be issued');
+      return;
+    }
+    
+    if (batch.inspection?.result !== 'PASS') {
+      toast.error('Batch inspection must pass before credential can be issued');
+      return;
+    }
+
     setIssuingBatchId(batch.id);
     try {
       await issueCredential(batch.id);
-      toast.success('Credential generated successfully');
+      toast.success('Credential generated successfully!');
       await queryClient.invalidateQueries({ queryKey: ['batches'] });
     } catch (error) {
       const message =
@@ -112,7 +140,7 @@ export default function AdminDashboard() {
       title="Admin & QA Control Room"
       description="Monitor exporter activity and issue credentials when inspections are complete."
     >
-      <div className="grid gap-6 md:grid-cols-3 mb-8">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5 mb-8">
         {stats.map((stat) => (
           <StatCard key={stat.label} {...stat} />
         ))}

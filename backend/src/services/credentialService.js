@@ -103,7 +103,24 @@ function sanitizeForDid(value = '') {
 async function issueCredential(user, batchId) {
   const batch = await batchService.getBatchById(user, batchId);
   if (!batch) {
-    return null;
+    throw new Error('BATCH_NOT_FOUND');
+  }
+
+  if (batch.status === 'REJECTED') {
+    throw new Error('BATCH_REJECTED');
+  }
+
+  if (batch.status !== 'INSPECTED') {
+    throw new Error('BATCH_NOT_INSPECTED');
+  }
+
+  if (!batch.inspection || batch.inspection.result !== 'PASS') {
+    throw new Error('INSPECTION_NOT_PASSED');
+  }
+
+  const existingCredential = await getCredentialForBatch(user, batchId);
+  if (existingCredential && existingCredential.status === 'ACTIVE') {
+    throw new Error('CREDENTIAL_ALREADY_ISSUED');
   }
 
   const issuerDid = `did:example:${sanitizeForDid(user.organization || user.role)}`;
