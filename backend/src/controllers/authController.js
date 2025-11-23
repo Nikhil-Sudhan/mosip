@@ -1,6 +1,6 @@
 const { z } = require('zod');
 const asyncHandler = require('../utils/asyncHandler');
-const { findByEmail } = require('../services/userService');
+const { findByEmail, createUser } = require('../services/userService');
 const { comparePassword } = require('../utils/password');
 const {
   generateAccessToken,
@@ -15,11 +15,18 @@ const {
 
 const loginSchema = z.object({
   email: z.string().email(),
-  password: z.string().min(6),
+  password: z.string().min(5),
 });
 
 const refreshSchema = z.object({
   refreshToken: z.string().min(10),
+});
+
+const registerSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(8),
+  role: z.enum(['IMPORTER', 'EXPORTER']),
+  organization: z.string().min(1).optional(),
 });
 
 function formatUser(user) {
@@ -130,9 +137,43 @@ const logout = asyncHandler(async (req, res) => {
   });
 });
 
+const register = asyncHandler(async (req, res) => {
+  const payload = registerSchema.parse(req.body);
+  
+  const existingUser = await findByEmail(payload.email);
+  if (existingUser) {
+    return res.status(400).json({
+      success: false,
+      error: { code: 'USER_EXISTS', message: 'User with this email already exists' },
+    });
+  }
+
+  const newUser = await createUser(payload);
+  
+  const accessToken = generateAccessToken({
+    sub: newUser.id,
+    role: newUser.role,
+  });
+  const refreshToken = generateRefreshToken({
+    sub: newUser.id,
+    role: newUser.role,
+  });
+  await storeRefreshToken(newUser.id, refreshToken);
+
+  return res.status(201).json({
+    success: true,
+    data: {
+      user: formatUser(newUser),
+      accessToken,
+      refreshToken,
+    },
+  });
+});
+
 module.exports = {
   login,
   refresh,
   logout,
+  register,
 };
 

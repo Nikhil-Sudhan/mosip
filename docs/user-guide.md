@@ -71,3 +71,6 @@ Accessible at `/verify` without login.
 - Connect MOSIP eSignet for SSO and Inji Certify for real signatures.
 - Add more roles/dashboards (audit viewer, template editor) by following the existing API contracts.
 
+
+
+

@@ -12,10 +12,7 @@ import { fetchBatches, recordInspection } from '../../api/batches';
 import {
   fetchCredential,
   issueCredential,
-  fetchTemplates,
-  createTemplate,
 } from '../../api/credentials';
-import { createUser } from '../../api/users';
 
 export default function AdminDashboard() {
   const queryClient = useQueryClient();
@@ -34,26 +31,10 @@ export default function AdminDashboard() {
     open: false,
     batch: null,
   });
-  const [userForm, setUserForm] = useState({
-    email: '',
-    password: '',
-    role: 'EXPORTER',
-    organization: '',
-  });
-  const [templateForm, setTemplateForm] = useState({
-    name: 'Digital Product Passport',
-    description: 'Standard template for agri exports',
-    schemaUrl: 'https://mosip.io/dpp/schema/v1',
-    fields: 'product.name,product.quantity,inspection.moisturePercent',
-  });
 
   const { data: batches = [], isLoading } = useQuery({
     queryKey: ['batches'],
     queryFn: fetchBatches,
-  });
-  const { data: templates = [] } = useQuery({
-    queryKey: ['templates'],
-    queryFn: fetchTemplates,
   });
 
   const inspectionMutation = useMutation({
@@ -66,32 +47,6 @@ export default function AdminDashboard() {
     onError: () => toast.error('Could not save inspection'),
   });
 
-  const userMutation = useMutation({
-    mutationFn: createUser,
-    onSuccess: () => {
-      toast.success('User created');
-      setUserForm({
-        email: '',
-        password: '',
-        role: 'EXPORTER',
-        organization: '',
-      });
-    },
-    onError: (error) => {
-      const message =
-        error.response?.data?.error?.message || 'Failed to create user';
-      toast.error(message);
-    },
-  });
-
-  const templateMutation = useMutation({
-    mutationFn: createTemplate,
-    onSuccess: () => {
-      toast.success('Template saved');
-      queryClient.invalidateQueries({ queryKey: ['templates'] });
-    },
-    onError: () => toast.error('Failed to save template'),
-  });
 
   const stats = [
     { label: 'Total batches', value: batches.length, accent: 'primary' },
@@ -151,40 +106,28 @@ export default function AdminDashboard() {
     }
   };
 
-  const quickLinks = [
-    {
-      title: 'Create exporter or customs logins',
-      description:
-        'Use POST /api/users with role EXPORTER or CUSTOMS. Add organization name so dashboards show branding.',
-    },
-    {
-      title: 'Assign QA partners',
-      description:
-        'Share QA accounts so they can update inspections and push batches to CERTIFIED.',
-    },
-    {
-      title: 'Rotate default admin',
-      description:
-        'Create a new admin user, sign in, then disable the seeded account in users.json.',
-    },
-  ];
 
   return (
     <PageContainer
-      title="Admin & QA control room"
-      description="Monitor exporter activity, manage role access, and issue credentials when inspections are complete."
-      actions={<Button onClick={() => toast.success('User guide coming soon')}>View setup guide</Button>}
+      title="Admin & QA Control Room"
+      description="Monitor exporter activity and issue credentials when inspections are complete."
     >
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-3 mb-8">
         {stats.map((stat) => (
           <StatCard key={stat.label} {...stat} />
         ))}
       </div>
-      <section className="mt-6 flex flex-col gap-4">
-        <h2 className="text-lg font-semibold text-slate-900">Latest batches</h2>
+      <section className="bg-white/90 backdrop-blur-lg rounded-2xl shadow-2xl border-2 border-white/50 p-6">
+        <div className="mb-6">
+          <h2 className="text-2xl font-extrabold bg-gradient-to-r from-violet-600 to-fuchsia-600 bg-clip-text text-transparent">Latest Batches</h2>
+          <p className="text-sm text-violet-700 font-medium mt-2">
+            Review and manage all submitted batches
+          </p>
+        </div>
         {isLoading ? (
-          <div className="rounded-xl border border-slate-100 bg-white p-6 text-sm text-slate-500">
-            Loading batches…
+          <div className="rounded-xl border-2 border-violet-200 bg-gradient-to-br from-violet-50 to-purple-50 p-8 text-center">
+            <div className="inline-block animate-spin rounded-full h-10 w-10 border-4 border-violet-500 border-t-transparent"></div>
+            <p className="mt-4 text-sm text-violet-700 font-semibold">Loading batches…</p>
           </div>
         ) : (
           <BatchList
@@ -204,200 +147,6 @@ export default function AdminDashboard() {
             }
           />
         )}
-      </section>
-      <section className="mt-8 grid gap-4 md:grid-cols-3">
-        {quickLinks.map((item) => (
-          <div
-            key={item.title}
-            className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm"
-          >
-            <p className="text-xs font-semibold uppercase tracking-wide text-primary-600">
-              Playbook
-            </p>
-            <h3 className="mt-2 text-lg font-semibold text-slate-900">
-              {item.title}
-            </h3>
-            <p className="mt-1 text-sm text-slate-500">{item.description}</p>
-          </div>
-        ))}
-      </section>
-      <section className="mt-8 grid gap-6 md:grid-cols-2">
-        <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-semibold text-slate-900">
-            Invite new portal user
-          </h2>
-          <p className="text-sm text-slate-500">
-            Create exporter, QA, or customs credentials instantly.
-          </p>
-          <form
-            className="mt-4 flex flex-col gap-3 text-sm text-slate-600"
-            onSubmit={(event) => {
-              event.preventDefault();
-              userMutation.mutate(userForm);
-            }}
-          >
-            <label className="flex flex-col gap-1">
-              <span className="font-medium">Email</span>
-              <input
-                type="email"
-                value={userForm.email}
-                onChange={(event) =>
-                  setUserForm((prev) => ({ ...prev, email: event.target.value }))
-                }
-                required
-                className="rounded-md border border-slate-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
-              />
-            </label>
-            <label className="flex flex-col gap-1">
-              <span className="font-medium">Password</span>
-              <input
-                type="password"
-                value={userForm.password}
-                onChange={(event) =>
-                  setUserForm((prev) => ({
-                    ...prev,
-                    password: event.target.value,
-                  }))
-                }
-                required
-                className="rounded-md border border-slate-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
-              />
-            </label>
-            <label className="flex flex-col gap-1">
-              <span className="font-medium">Organization</span>
-              <input
-                type="text"
-                value={userForm.organization}
-                onChange={(event) =>
-                  setUserForm((prev) => ({
-                    ...prev,
-                    organization: event.target.value,
-                  }))
-                }
-                className="rounded-md border border-slate-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
-              />
-            </label>
-            <label className="flex flex-col gap-1">
-              <span className="font-medium">Role</span>
-              <select
-                value={userForm.role}
-                onChange={(event) =>
-                  setUserForm((prev) => ({ ...prev, role: event.target.value }))
-                }
-                className="rounded-md border border-slate-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
-              >
-                <option value="EXPORTER">Exporter</option>
-                <option value="QA">QA</option>
-                <option value="CUSTOMS">Customs</option>
-                <option value="IMPORTER">Importer</option>
-                <option value="ADMIN">Admin</option>
-              </select>
-            </label>
-            <Button type="submit" disabled={userMutation.isPending}>
-              {userMutation.isPending ? 'Creating…' : 'Create user'}
-            </Button>
-          </form>
-        </div>
-        <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-semibold text-slate-900">
-            Certificate templates
-          </h2>
-          <p className="text-sm text-slate-500">
-            Control the schema fields included in each Digital Product Passport.
-          </p>
-          <form
-            className="mt-4 flex flex-col gap-3 text-sm text-slate-600"
-            onSubmit={(event) => {
-              event.preventDefault();
-              const fields = templateForm.fields
-                .split(',')
-                .map((field) => field.trim())
-                .filter(Boolean);
-              templateMutation.mutate({
-                name: templateForm.name,
-                description: templateForm.description,
-                schemaUrl: templateForm.schemaUrl,
-                fields,
-              });
-            }}
-          >
-            <label className="flex flex-col gap-1">
-              <span className="font-medium">Template name</span>
-              <input
-                type="text"
-                value={templateForm.name}
-                onChange={(event) =>
-                  setTemplateForm((prev) => ({
-                    ...prev,
-                    name: event.target.value,
-                  }))
-                }
-                className="rounded-md border border-slate-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
-              />
-            </label>
-            <label className="flex flex-col gap-1">
-              <span className="font-medium">Description</span>
-              <textarea
-                rows={2}
-                value={templateForm.description}
-                onChange={(event) =>
-                  setTemplateForm((prev) => ({
-                    ...prev,
-                    description: event.target.value,
-                  }))
-                }
-                className="rounded-md border border-slate-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
-              />
-            </label>
-            <label className="flex flex-col gap-1">
-              <span className="font-medium">Schema URL</span>
-              <input
-                type="url"
-                value={templateForm.schemaUrl}
-                onChange={(event) =>
-                  setTemplateForm((prev) => ({
-                    ...prev,
-                    schemaUrl: event.target.value,
-                  }))
-                }
-                className="rounded-md border border-slate-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
-              />
-            </label>
-            <label className="flex flex-col gap-1">
-              <span className="font-medium">Fields (comma separated)</span>
-              <input
-                type="text"
-                value={templateForm.fields}
-                onChange={(event) =>
-                  setTemplateForm((prev) => ({
-                    ...prev,
-                    fields: event.target.value,
-                  }))
-                }
-                className="rounded-md border border-slate-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
-              />
-            </label>
-            <Button type="submit" disabled={templateMutation.isPending}>
-              {templateMutation.isPending ? 'Saving…' : 'Save template'}
-            </Button>
-          </form>
-          <div className="mt-4 space-y-3">
-            {templates.slice(0, 3).map((template) => (
-              <div
-                key={template.id}
-                className="rounded-xl border border-slate-100 bg-slate-50 p-3 text-sm text-slate-600"
-              >
-                <p className="font-semibold text-slate-900">
-                  {template.name}
-                </p>
-                <p>{template.description}</p>
-                <p className="text-xs text-slate-500">
-                  Fields: {template.fields?.join(', ')}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
       </section>
       <CredentialModal
         open={credentialModal.open}

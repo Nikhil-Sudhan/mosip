@@ -10,5 +10,41 @@
       "name": "Digital Product Passport"
     },
     "createdAt": "2025-11-17T11:38:41.578Z"
+  },
+  {
+    "id": "1763899928752-849565",
+    "action": "batch.submitted",
+    "userId": "bba5944e-8462-42d7-a55a-195a9889d0c6",
+    "role": "EXPORTER",
+    "entityType": "BATCH",
+    "entityId": "09d73fae-1706-4114-9da0-fc625695989c",
+    "metadata": {
+      "productType": "Rice"
+    },
+    "createdAt": "2025-11-23T12:12:08.752Z"
+  },
+  {
+    "id": "1763899948552-339981",
+    "action": "inspection.recorded",
+    "userId": "admin-gmail-user-id-12345",
+    "role": "ADMIN",
+    "entityType": "BATCH",
+    "entityId": "09d73fae-1706-4114-9da0-fc625695989c",
+    "metadata": {
+      "result": "FAIL"
+    },
+    "createdAt": "2025-11-23T12:12:28.552Z"
+  },
+  {
+    "id": "1763899950793-176048",
+    "action": "credential.issued",
+    "userId": "admin-gmail-user-id-12345",
+    "role": "ADMIN",
+    "entityType": "CREDENTIAL",
+    "entityId": "1061c568-7178-42b6-95cd-a40a28b0bc46",
+    "metadata": {
+      "batchId": "09d73fae-1706-4114-9da0-fc625695989c"
+    },
+    "createdAt": "2025-11-23T12:12:30.793Z"
   }
 ]

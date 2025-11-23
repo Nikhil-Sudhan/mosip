@@ -87,5 +87,62 @@
     ],
     "createdAt": "2025-11-17T10:13:25.378Z",
     "updatedAt": "2025-11-17T10:13:29.278Z"
+  },
+  {
+    "id": "09d73fae-1706-4114-9da0-fc625695989c",
+    "exporterId": "bba5944e-8462-42d7-a55a-195a9889d0c6",
+    "productType": "Rice",
+    "variety": "123",
+    "quantity": 1000,
+    "unit": "kg",
+    "originCountry": "123",
+    "destinationCountry": "123",
+    "harvestDate": "2025-11-11",
+    "notes": "123123",
+    "status": "CERTIFIED",
+    "docs": [
+      {
+        "id": "39664cd6-c770-4221-a235-392085537332",
+        "originalName": "Gemini_Generated_Image_5lpyl85lpyl85lpy.png",
+        "mimeType": "image/png",
+        "size": 1799931,
+        "path": "1763899928729-665001871.png",
+        "url": "/uploads/1763899928729-665001871.png",
+        "uploadedAt": "2025-11-23T12:12:08.750Z"
+      }
+    ],
+    "inspection": {
+      "moisturePercent": 11.3,
+      "pesticidePPM": 0.05,
+      "organicStatus": "India Organic Certified",
+      "isoCode": "ISO 22000",
+      "result": "FAIL",
+      "notes": "",
+      "inspectorId": "admin-gmail-user-id-12345",
+      "inspectorOrg": "Agency",
+      "recordedAt": "2025-11-23T12:12:28.550Z"
+    },
+    "history": [
+      {
+        "id": "df2552f0-2af3-40a2-8872-3af4ce401a01",
+        "status": "SUBMITTED",
+        "message": "Batch submitted by exporter",
+        "createdAt": "2025-11-23T12:12:08.750Z"
+      },
+      {
+        "id": "a61efad9-e298-49ea-bac4-ecd6db730f91",
+        "status": "REJECTED",
+        "message": "Inspection recorded (FAIL)",
+        "createdAt": "2025-11-23T12:12:28.550Z"
+      },
+      {
+        "id": "e88055e8-4bf4-4bad-817d-9008c19a8e5b",
+        "status": "CERTIFIED",
+        "message": "Credential issued by Agency",
+        "createdAt": "2025-11-23T12:12:30.791Z"
+      }
+    ],
+    "createdAt": "2025-11-23T12:12:08.750Z",
+    "updatedAt": "2025-11-23T12:12:30.791Z"
   }
 ]

@@ -8,5 +8,35 @@
     "isActive": true,
     "createdAt": "2025-11-17T08:52:18.494Z",
     "updatedAt": "2025-11-17T08:52:18.494Z"
+  },
+  {
+    "id": "admin-gmail-user-id-12345",
+    "email": "admin@gmail.com",
+    "passwordHash": "$2b$10$4CrZTv4uh0ByEPCNWOl//O6KybhKmM3UDiUYXe5O5kOq4JH0LUrTi",
+    "role": "ADMIN",
+    "organization": "Agency",
+    "isActive": true,
+    "createdAt": "2025-11-23T12:00:00.000Z",
+    "updatedAt": "2025-11-23T12:00:00.000Z"
+  },
+  {
+    "id": "6134ded5-ff69-4be0-aa88-c019591a06fd",
+    "email": "test@example.com",
+    "passwordHash": "$2b$10$hDOC189chzJnDJOyoJFNE.n0bIDYycuU1VeDb8XbSz/ponl5XQ0qC",
+    "role": "EXPORTER",
+    "organization": "Test Org",
+    "isActive": true,
+    "createdAt": "2025-11-23T11:41:44.534Z",
+    "updatedAt": "2025-11-23T11:41:44.534Z"
+  },
+  {
+    "id": "bba5944e-8462-42d7-a55a-195a9889d0c6",
+    "email": "cuddle@gmail.com",
+    "passwordHash": "$2b$10$0/ImnKLlw5aqAMO3UT727u7a96zaIuSMGwZkTT7vwBWon2kudLhk2",
+    "role": "EXPORTER",
+    "organization": "123",
+    "isActive": true,
+    "createdAt": "2025-11-23T11:50:50.801Z",
+    "updatedAt": "2025-11-23T11:50:50.801Z"
   }
 ]

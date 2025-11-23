@@ -17,3 +17,6 @@ export async function fetchVerificationActivity() {
   return response.data.data.entries;
 }
 
+
+
+

@@ -61,3 +61,6 @@
   - Attachments can move to S3/MinIO; store URLs + checksums instead of filenames.
 - Production improvements: move private signing key to HSM/secret manager, integrate MOSIP eSignet + Inji Certify APIs, enforce revocation lists (RevocationList2020), persist audit logs centrally.
 
+
+
+

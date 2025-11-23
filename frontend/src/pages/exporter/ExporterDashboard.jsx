@@ -89,16 +89,22 @@ export default function ExporterDashboard() {
         </Button>
       }
     >
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-3 mb-8">
         {stats.map((stat) => (
           <StatCard key={stat.label} {...stat} />
         ))}
       </div>
-      <section className="mt-6 flex flex-col gap-4">
-        <h2 className="text-lg font-semibold text-slate-900">Recent batches</h2>
+      <section className="bg-white/90 backdrop-blur-lg rounded-2xl shadow-2xl border-2 border-white/50 p-6">
+        <div className="mb-6">
+          <h2 className="text-2xl font-extrabold bg-gradient-to-r from-violet-600 to-fuchsia-600 bg-clip-text text-transparent">Recent Batches</h2>
+          <p className="text-sm text-violet-700 font-medium mt-2">
+            Track your submitted agricultural batches
+          </p>
+        </div>
         {isLoading ? (
-          <div className="rounded-xl border border-slate-100 bg-white p-6 text-sm text-slate-500">
-            Loading batches…
+          <div className="rounded-xl border-2 border-violet-200 bg-gradient-to-br from-violet-50 to-purple-50 p-8 text-center">
+            <div className="inline-block animate-spin rounded-full h-10 w-10 border-4 border-violet-500 border-t-transparent"></div>
+            <p className="mt-4 text-sm text-violet-700 font-semibold">Loading batches…</p>
           </div>
         ) : (
           <BatchList

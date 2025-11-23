@@ -1,12 +1,12 @@
 function statusColor(status) {
   const map = {
-    SUBMITTED: 'bg-primary-50 text-primary-700',
-    UNDER_REVIEW: 'bg-amber-50 text-amber-700',
-    INSPECTED: 'bg-blue-50 text-blue-700',
-    CERTIFIED: 'bg-emerald-50 text-emerald-700',
-    REJECTED: 'bg-rose-50 text-rose-600',
+    SUBMITTED: 'bg-gradient-to-r from-violet-400 to-purple-500 text-white font-bold shadow-md shadow-violet-500/50',
+    UNDER_REVIEW: 'bg-gradient-to-r from-amber-400 to-orange-500 text-white font-bold shadow-md shadow-amber-500/50',
+    INSPECTED: 'bg-gradient-to-r from-blue-400 to-cyan-500 text-white font-bold shadow-md shadow-blue-500/50',
+    CERTIFIED: 'bg-gradient-to-r from-emerald-400 to-green-500 text-white font-bold shadow-md shadow-emerald-500/50',
+    REJECTED: 'bg-gradient-to-r from-red-400 to-pink-500 text-white font-bold shadow-md shadow-red-500/50',
   };
-  return map[status] || 'bg-slate-100 text-slate-600';
+  return map[status] || 'bg-gradient-to-r from-slate-400 to-slate-500 text-white font-bold shadow-md';
 }
 
 export default function BatchList({
@@ -20,70 +20,70 @@ export default function BatchList({
 }) {
   if (!batches.length) {
     return (
-      <div className="rounded-lg border border-dashed border-slate-200 bg-white p-8 text-center text-sm text-slate-500">
-        No batches yet. Use the “Submit batch” button to add your first
+      <div className="rounded-2xl border-2 border-dashed border-violet-300 bg-gradient-to-br from-violet-50 to-purple-50 p-8 text-center text-sm text-violet-700 font-medium">
+        No batches yet. Use the "Submit batch" button to add your first
         shipment.
       </div>
     );
   }
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-100 bg-white shadow-sm">
-      <table className="min-w-full divide-y divide-slate-100 text-sm">
-        <thead className="bg-slate-50">
+    <div className="overflow-hidden rounded-2xl border-2 border-white/50 bg-white/90 backdrop-blur-lg shadow-2xl">
+      <table className="min-w-full divide-y divide-violet-100 text-sm">
+        <thead className="bg-gradient-to-r from-violet-500 via-purple-500 to-fuchsia-500">
           <tr>
-            <th className="px-4 py-3 text-left font-medium text-slate-500">
+            <th className="px-4 py-4 text-left font-bold text-white">
               Product
             </th>
-            <th className="px-4 py-3 text-left font-medium text-slate-500">
+            <th className="px-4 py-4 text-left font-bold text-white">
               Quantity
             </th>
-            <th className="px-4 py-3 text-left font-medium text-slate-500">
+            <th className="px-4 py-4 text-left font-bold text-white">
               Destination
             </th>
-            <th className="px-4 py-3 text-left font-medium text-slate-500">
+            <th className="px-4 py-4 text-left font-bold text-white">
               Status
             </th>
-            <th className="px-4 py-3 text-left font-medium text-slate-500">
+            <th className="px-4 py-4 text-left font-bold text-white">
               Submitted
             </th>
-            <th className="px-4 py-3 text-right font-medium text-slate-500">
+            <th className="px-4 py-4 text-right font-bold text-white">
               Actions
             </th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-100 bg-white">
+        <tbody className="divide-y divide-violet-100 bg-white/50">
           {batches.map((batch) => (
-            <tr key={batch.id}>
-              <td className="px-4 py-3">
-                <p className="font-medium text-slate-800">
+            <tr key={batch.id} className="hover:bg-gradient-to-r hover:from-violet-50 hover:to-purple-50 transition-colors">
+              <td className="px-4 py-4">
+                <p className="font-bold text-slate-900">
                   {batch.productType}
                 </p>
-                <p className="text-xs text-slate-500">{batch.variety}</p>
+                <p className="text-xs text-violet-600 font-medium">{batch.variety}</p>
               </td>
-              <td className="px-4 py-3 text-slate-600">
+              <td className="px-4 py-4 text-slate-700 font-semibold">
                 {batch.quantity} {batch.unit}
               </td>
-              <td className="px-4 py-3 text-slate-600">
+              <td className="px-4 py-4 text-slate-700 font-semibold">
                 {batch.destinationCountry}
               </td>
-              <td className="px-4 py-3">
+              <td className="px-4 py-4">
                 <span
-                  className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${statusColor(
+                  className={`inline-flex rounded-full px-4 py-1.5 text-xs font-bold ${statusColor(
                     batch.status
                   )}`}
                 >
                   {batch.status}
                 </span>
               </td>
-              <td className="px-4 py-3 text-slate-500">
+              <td className="px-4 py-4 text-slate-600 font-medium">
                 {new Date(batch.createdAt).toLocaleDateString()}
               </td>
-              <td className="px-4 py-3">
-                <div className="flex flex-wrap justify-end gap-2 text-sm font-semibold">
+              <td className="px-4 py-4">
+                <div className="flex flex-wrap justify-end gap-2 text-sm font-bold">
                   {onViewHistory && (
                     <button
                       type="button"
-                      className="text-slate-500 hover:text-slate-700"
+                      className="text-violet-600 hover:text-violet-800 hover:underline transition-all"
                       onClick={() => onViewHistory?.(batch)}
                     >
                       Track
@@ -92,7 +92,7 @@ export default function BatchList({
                   {batch.status === 'CERTIFIED' ? (
                     <button
                       type="button"
-                      className="text-primary-600 hover:text-primary-700"
+                      className="bg-gradient-to-r from-emerald-400 to-green-500 text-white px-4 py-1.5 rounded-lg hover:from-emerald-500 hover:to-green-600 shadow-md hover:shadow-lg transition-all"
                       onClick={() => onViewCredential?.(batch)}
                     >
                       View VC
@@ -101,14 +101,14 @@ export default function BatchList({
                     <>
                       <button
                         type="button"
-                        className="text-primary-600 hover:text-primary-700"
+                        className="bg-gradient-to-r from-amber-400 to-orange-500 text-white px-4 py-1.5 rounded-lg hover:from-amber-500 hover:to-orange-600 shadow-md hover:shadow-lg transition-all"
                         onClick={() => onRecordInspection?.(batch)}
                       >
                         Record QA
                       </button>
                       <button
                         type="button"
-                        className="text-primary-600 hover:text-primary-700 disabled:text-slate-400"
+                        className="bg-gradient-to-r from-violet-400 to-purple-500 text-white px-4 py-1.5 rounded-lg hover:from-violet-500 hover:to-purple-600 shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                         disabled={issuingBatchId === batch.id}
                         onClick={() => onIssueCredential?.(batch)}
                       >
@@ -118,7 +118,7 @@ export default function BatchList({
                       </button>
                     </>
                   ) : (
-                    <span className="text-xs text-slate-400">Pending QA</span>
+                    <span className="text-xs text-violet-500 font-semibold">Pending QA</span>
                   )}
                 </div>
               </td>

@@ -166,3 +166,6 @@ HTTP 400/401/403/404
 - Import `docs/api.md` table or generate automatically with e.g. VS Code Thunder Client.
 - For hackathon demos: configure Postman collection hitting `http://localhost:4000/api`.
 
+
+
+

@@ -1,7 +1,6 @@
 const { z } = require('zod');
 const asyncHandler = require('../utils/asyncHandler');
 const credentialService = require('../services/credentialService');
-const templateService = require('../services/templateService');
 
 const issue = asyncHandler(async (req, res) => {
   const credential = await credentialService.issueCredential(
@@ -53,30 +52,10 @@ const revoke = asyncHandler(async (req, res) => {
   return res.json({ success: true, data: { credential } });
 });
 
-const templateSchema = z.object({
-  name: z.string().min(3),
-  description: z.string().min(5),
-  schemaUrl: z.string().url(),
-  fields: z.array(z.string().min(1)).min(1),
-});
-
-const listTemplates = asyncHandler(async (req, res) => {
-  const templates = await templateService.listTemplates();
-  return res.json({ success: true, data: { templates } });
-});
-
-const createTemplate = asyncHandler(async (req, res) => {
-  const payload = templateSchema.parse(req.body);
-  const template = await templateService.createTemplate(req.user, payload);
-  return res.status(201).json({ success: true, data: { template } });
-});
-
 module.exports = {
   issue,
   show,
   revoke,
-  listTemplates,
-  createTemplate,
 };
 
 

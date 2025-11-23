@@ -15,14 +15,5 @@ export async function revokeCredential(batchId, reason) {
   return response.data.data.credential;
 }
 
-export async function fetchTemplates() {
-  const response = await api.get('/vc/templates');
-  return response.data.data.templates;
-}
-
-export async function createTemplate(payload) {
-  const response = await api.post('/vc/templates', payload);
-  return response.data.data.template;
-}
 
 

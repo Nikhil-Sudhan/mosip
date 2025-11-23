@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import Login from './pages/Login';
+import Register from './pages/Register';
 import ExporterDashboard from './pages/exporter/ExporterDashboard';
 import NewBatch from './pages/exporter/NewBatch';
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -17,6 +18,7 @@ function App() {
       <Routes>
         <Route path="/" element={<RoleRedirect />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
         <Route path="/unauthorized" element={<Unauthorized />} />
         <Route
           path="/admin"
@@ -45,7 +47,7 @@ function App() {
         <Route
           path="/customs"
           element={
-            <ProtectedRoute allowedRoles={['CUSTOMS']}>
+            <ProtectedRoute allowedRoles={['CUSTOMS', 'IMPORTER']}>
               <CustomsDashboard />
             </ProtectedRoute>
           }

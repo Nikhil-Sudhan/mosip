@@ -9,11 +9,26 @@ const credentialRoutes = require('./routes/credentialRoutes');
 const verifyRoutes = require('./routes/verifyRoutes');
 const { notFound, errorHandler } = require('./middleware/errorHandler');
 
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:4173',
+  process.env.FRONTEND_URL,
+  process.env.FRONTEND_PREVIEW_URL,
+].filter(Boolean);
+
 const app = express();
 
 app.use(
   cors({
-    origin: ['http://localhost:5173', 'http://localhost:4173'],
+    origin(origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      if (/^http:\/\/192\.168\.\d+\.\d+:\d+$/.test(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error('Not allowed by CORS'));
+    },
     credentials: true,
   })
 );
