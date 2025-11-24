@@ -12,6 +12,8 @@ const {
   isRefreshTokenValid,
   revokeRefreshToken,
 } = require('../services/sessionService');
+const esignetService = require('../services/esignetService');
+const config = require('../config');
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -170,10 +172,104 @@ const register = asyncHandler(async (req, res) => {
   });
 });
 
+/**
+ * eSignet OIDC Flow - Step 1: Get authorization URL
+ * Frontend redirects user to this URL for authentication
+ */
+const esignetLogin = asyncHandler(async (req, res) => {
+  const state = req.query.state || Date.now().toString();
+  const authUrl = esignetService.getAuthorizationUrl(state);
+  
+  return res.json({
+    success: true,
+    data: {
+      authorizationUrl: authUrl,
+      state: state,
+    },
+  });
+});
+
+/**
+ * eSignet OIDC Flow - Step 2: Handle callback from eSignet
+ * eSignet redirects here after user authenticates
+ */
+const esignetCallback = asyncHandler(async (req, res) => {
+  const { code, state } = req.query;
+  
+  if (!code) {
+    return res.status(400).json({
+      success: false,
+      error: { code: 'MISSING_CODE', message: 'Authorization code not provided' },
+    });
+  }
+  
+  try {
+    // Exchange code for tokens
+    const tokens = await esignetService.exchangeCodeForTokens(code);
+    
+    // Get user info from eSignet
+    const userInfo = await esignetService.getUserInfo(tokens.accessToken);
+    
+    // Verify ID token
+    const idTokenPayload = esignetService.verifyIdToken(tokens.idToken);
+    
+    // Find or create user in our system based on eSignet user info
+    // Using email or individual_id from eSignet
+    const userEmail = userInfo.email || idTokenPayload.email || userInfo.sub;
+    let user = await findByEmail(userEmail);
+    
+    if (!user) {
+      // Create user from eSignet data
+      // Map eSignet role to our system roles if needed
+      const role = userInfo.role || 'EXPORTER'; // Default role
+      user = await createUser({
+        email: userEmail,
+        password: 'esignet-user-' + Date.now(), // Random password, not used for eSignet users
+        role: role,
+        organization: userInfo.organization || userInfo.name,
+      });
+    }
+    
+    // Generate our own tokens for the session
+    const accessToken = generateAccessToken({
+      sub: user.id,
+      role: user.role,
+    });
+    const refreshToken = generateRefreshToken({
+      sub: user.id,
+      role: user.role,
+    });
+    await storeRefreshToken(user.id, refreshToken);
+    
+    // Store eSignet tokens in session (optional, for future API calls)
+    // In production, store these securely
+    
+    return res.json({
+      success: true,
+      data: {
+        user: formatUser(user),
+        accessToken,
+        refreshToken,
+        esignetTokens: {
+          accessToken: tokens.accessToken,
+          refreshToken: tokens.refreshToken,
+        },
+      },
+    });
+  } catch (error) {
+    return res.status(401).json({
+      success: false,
+      error: { code: 'ESIGNET_AUTH_FAILED', message: error.message },
+    });
+  }
+});
+
 module.exports = {
   login,
   refresh,
   logout,
   register,
+  esignetLogin,
+  esignetCallback,
 };
 

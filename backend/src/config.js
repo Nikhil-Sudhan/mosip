@@ -14,6 +14,27 @@ const config = {
   publicUrl: process.env.PUBLIC_URL || 'http://localhost:4000',
   verifyPortalUrl:
     process.env.VERIFY_PORTAL_URL || 'http://localhost:5173/verify',
+  
+  // eSignet Configuration
+  esignet: {
+    baseUrl: process.env.ESIGNET_BASE_URL || 'http://localhost:8080',
+    clientId: process.env.ESIGNET_CLIENT_ID || '',
+    clientSecret: process.env.ESIGNET_CLIENT_SECRET || '',
+    redirectUri: process.env.ESIGNET_REDIRECT_URI || 'http://localhost:4000/api/auth/callback',
+    scope: process.env.ESIGNET_SCOPE || 'openid profile email',
+  },
+  
+  // INJI Certify Configuration
+  injiCertify: {
+    baseUrl: process.env.INJI_CERTIFY_BASE_URL || 'http://localhost:8081',
+    apiKey: process.env.INJI_CERTIFY_API_KEY || '',
+    issuerDid: process.env.INJI_ISSUER_DID || 'did:example:qa-agency',
+  },
+  
+  // INJI Verify Configuration
+  injiVerify: {
+    baseUrl: process.env.INJI_VERIFY_BASE_URL || 'http://localhost:8082',
+  },
 };
 
 module.exports = config;

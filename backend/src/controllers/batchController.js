@@ -3,13 +3,29 @@ const asyncHandler = require('../utils/asyncHandler');
 const batchService = require('../services/batchService');
 
 const batchSchema = z.object({
+  // Product Batch Documents
   productType: z.string().min(1),
+  grade: z.string().optional(),
   variety: z.string().optional(),
+  batchNumber: z.string().min(1),
   quantity: z.coerce.number().positive(),
   unit: z.string().min(1),
+  weight: z.coerce.number().positive().optional(),
+  weightUnit: z.string().optional(),
+  
+  // Harvest/Farm Details
+  farmAddress: z.string().optional(),
+  farmerDetails: z.string().optional(),
+  harvestDate: z.string().min(4),
+  organicStatus: z.enum(['ORGANIC', 'NON_ORGANIC']).optional(),
+  
+  // Packaging Details
+  containerDetails: z.string().optional(),
+  
+  // Origin/Destination
   originCountry: z.string().min(1),
   destinationCountry: z.string().min(1),
-  harvestDate: z.string().min(4),
+  
   notes: z.string().optional(),
 });
 
@@ -40,15 +56,65 @@ const show = asyncHandler(async (req, res) => {
 
 const create = asyncHandler(async (req, res) => {
   const payload = batchSchema.parse(req.body);
-  const batch = await batchService.createBatch(req.user, payload, req.files);
+  
+  // Flatten files from fields structure and maintain category mapping
+  const allFiles = [];
+  const fileCategories = [];
+  
+  if (req.files) {
+    // Handle categorized uploads
+    ['productDocuments', 'labReports', 'certifications', 'complianceDocs', 'packagingPhotos'].forEach(category => {
+      if (req.files[category]) {
+        req.files[category].forEach(file => {
+          allFiles.push(file);
+          fileCategories.push(category);
+        });
+      }
+    });
+    
+    // Handle general documents (backward compatibility)
+    if (req.files['documents']) {
+      req.files['documents'].forEach(file => {
+        allFiles.push(file);
+        fileCategories.push('general');
+      });
+    }
+  }
+  
+  const batch = await batchService.createBatch(req.user, payload, allFiles, fileCategories);
   res.status(201).json({ success: true, data: { batch } });
 });
 
 const addDocuments = asyncHandler(async (req, res) => {
+  // Flatten files from fields structure and maintain category mapping
+  const allFiles = [];
+  const fileCategories = [];
+  
+  if (req.files) {
+    // Handle categorized uploads
+    ['productDocuments', 'labReports', 'certifications', 'complianceDocs', 'packagingPhotos'].forEach(category => {
+      if (req.files[category]) {
+        req.files[category].forEach(file => {
+          allFiles.push(file);
+          fileCategories.push(category);
+        });
+      }
+    });
+    
+    // Handle general documents (backward compatibility)
+    if (req.files['documents']) {
+      req.files['documents'].forEach(file => {
+        allFiles.push(file);
+        fileCategories.push('general');
+      });
+    }
+  }
+  
   const batch = await batchService.appendDocuments(
     req.user,
     req.params.id,
-    req.files
+    allFiles,
+    fileCategories
   );
   if (!batch) {
     return res.status(404).json({

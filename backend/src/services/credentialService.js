@@ -5,6 +5,7 @@ const { ensureJSON, readJSON, writeJSON } = require('../lib/fileStore');
 const batchService = require('./batchService');
 const config = require('../config');
 const auditService = require('./auditService');
+const injiCertifyService = require('./injiCertifyService');
 
 const STORE_PATH = path.join(__dirname, '..', 'data', 'credentials.json');
 
@@ -100,7 +101,7 @@ function sanitizeForDid(value = '') {
     .replace(/^-|-$/g, '') || 'qa-agency';
 }
 
-async function issueCredential(user, batchId) {
+async function issueCredential(user, batchId, esignetAccessToken = null) {
   const batch = await batchService.getBatchById(user, batchId);
   if (!batch) {
     throw new Error('BATCH_NOT_FOUND');
@@ -123,20 +124,68 @@ async function issueCredential(user, batchId) {
     throw new Error('CREDENTIAL_ALREADY_ISSUED');
   }
 
-  const issuerDid = `did:example:${sanitizeForDid(user.organization || user.role)}`;
+  const issuerDid = config.injiCertify.issuerDid || `did:example:${sanitizeForDid(user.organization || user.role)}`;
   const issuedDate = new Date();
   const expiresDate = new Date(issuedDate);
   expiresDate.setFullYear(expiresDate.getFullYear() + 1);
   const issuedAt = issuedDate.toISOString();
   const expiresAt = expiresDate.toISOString();
   const credentialId = uuid();
-  const credentialJson = buildCredentialPayload(
-    batch,
-    issuerDid,
-    issuedAt,
-    expiresAt,
-    credentialId
-  );
+
+  // Build credential subject data
+  const credentialSubject = {
+    id: `did:example:batch-${batch.id}`,
+    product: {
+      name: batch.productType,
+      variety: batch.variety,
+      batchNumber: batch.id.slice(0, 8).toUpperCase(),
+      quantity: `${batch.quantity} ${batch.unit}`,
+      origin: batch.originCountry,
+      destination: batch.destinationCountry,
+    },
+    inspection: buildInspectionPayload(batch),
+  };
+
+  let credentialJson;
+
+  // Use INJI Certify if access token is provided and config is set
+  if (esignetAccessToken && config.injiCertify.baseUrl && config.injiCertify.apiKey) {
+    try {
+      // Issue credential using INJI Certify
+      credentialJson = await injiCertifyService.issueCredential(
+        {
+          credentialSubject: credentialSubject,
+          type: ['VerifiableCredential', 'DigitalProductPassport'],
+          expirationDate: expiresAt,
+        },
+        esignetAccessToken
+      );
+      
+      // Update credential ID and dates from INJI response
+      credentialId = credentialJson.id || credentialId;
+      issuedAt = credentialJson.issuanceDate || issuedAt;
+      expiresAt = credentialJson.expirationDate || expiresAt;
+    } catch (error) {
+      // Fallback to manual generation if INJI Certify fails
+      console.warn('INJI Certify failed, using fallback:', error.message);
+      credentialJson = buildCredentialPayload(
+        batch,
+        issuerDid,
+        issuedAt,
+        expiresAt,
+        credentialId
+      );
+    }
+  } else {
+    // Fallback: Build credential manually (for backward compatibility)
+    credentialJson = buildCredentialPayload(
+      batch,
+      issuerDid,
+      issuedAt,
+      expiresAt,
+      credentialId
+    );
+  }
 
   const verificationUrl = `${config.publicUrl}/api/verify/${credentialId}`;
   const qrPortalUrl = `${config.verifyPortalUrl}?credential=${credentialId}`;
@@ -150,7 +199,7 @@ async function issueCredential(user, batchId) {
   const credentialRecord = {
     id: credentialId,
     batchId,
-    issuer: issuerDid,
+    issuer: credentialJson.issuer || issuerDid,
     issuedBy: user.id,
     issuedAt,
     expiresAt,

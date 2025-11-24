@@ -48,7 +48,7 @@ async function getBatchById(user, batchId) {
   return batch;
 }
 
-function mapDocuments(files = []) {
+function mapDocuments(files = [], category = 'general') {
   const now = new Date().toISOString();
   return files.map((file) => ({
     id: uuid(),
@@ -57,28 +57,103 @@ function mapDocuments(files = []) {
     size: file.size,
     path: file.filename,
     url: `/uploads/${file.filename}`,
+    category: category,
     uploadedAt: now,
   }));
 }
 
-async function createBatch(user, payload, files) {
+function organizeDocumentsByCategory(files, fileCategories) {
+  const organized = {
+    productDocuments: [],
+    labReports: [],
+    certifications: [],
+    complianceDocs: [],
+    packagingPhotos: [],
+    general: [],
+  };
+
+  // Map files to categories based on field names
+  files.forEach((file, index) => {
+    const category = fileCategories[index] || 'general';
+    const doc = {
+      id: uuid(),
+      originalName: file.originalname,
+      mimeType: file.mimetype,
+      size: file.size,
+      path: file.filename,
+      url: `/uploads/${file.filename}`,
+      category: category,
+      uploadedAt: new Date().toISOString(),
+    };
+
+    if (category.startsWith('product')) {
+      organized.productDocuments.push(doc);
+    } else if (category.startsWith('lab')) {
+      organized.labReports.push(doc);
+    } else if (category.startsWith('certification')) {
+      organized.certifications.push(doc);
+    } else if (category.startsWith('compliance')) {
+      organized.complianceDocs.push(doc);
+    } else if (category.startsWith('packaging')) {
+      organized.packagingPhotos.push(doc);
+    } else {
+      organized.general.push(doc);
+    }
+  });
+
+  return organized;
+}
+
+async function createBatch(user, payload, files, fileCategories = []) {
   const batches = await getAllBatches();
   const now = new Date().toISOString();
-  const documents = mapDocuments(files);
+  
+  // Organize documents by category
+  const organizedDocs = organizeDocumentsByCategory(files, fileCategories);
+  
+  // Flatten all documents for backward compatibility
+  const allDocuments = [
+    ...organizedDocs.productDocuments,
+    ...organizedDocs.labReports,
+    ...organizedDocs.certifications,
+    ...organizedDocs.complianceDocs,
+    ...organizedDocs.packagingPhotos,
+    ...organizedDocs.general,
+  ];
 
   const batch = {
     id: uuid(),
     exporterId: user.id,
+    // Product Batch Documents
     productType: payload.productType,
+    grade: payload.grade || '',
     variety: payload.variety || '',
+    batchNumber: payload.batchNumber,
     quantity: payload.quantity,
     unit: payload.unit,
+    weight: payload.weight || null,
+    weightUnit: payload.weightUnit || '',
+    
+    // Harvest/Farm Details
+    farmAddress: payload.farmAddress || '',
+    farmerDetails: payload.farmerDetails || '',
+    harvestDate: payload.harvestDate,
+    organicStatus: payload.organicStatus || 'NON_ORGANIC',
+    
+    // Packaging Details
+    containerDetails: payload.containerDetails || '',
+    
+    // Origin/Destination
     originCountry: payload.originCountry,
     destinationCountry: payload.destinationCountry,
-    harvestDate: payload.harvestDate,
+    
     notes: payload.notes || '',
     status: 'SUBMITTED',
-    docs: documents,
+    
+    // Organized documents
+    documents: organizedDocs,
+    docs: allDocuments, // Backward compatibility
+    
     inspection: null,
     history: [
       {
@@ -99,12 +174,12 @@ async function createBatch(user, payload, files) {
     role: user.role,
     entityType: 'BATCH',
     entityId: batch.id,
-    metadata: { productType: batch.productType },
+    metadata: { productType: batch.productType, batchNumber: batch.batchNumber },
   });
   return batch;
 }
 
-async function appendDocuments(user, batchId, files) {
+async function appendDocuments(user, batchId, files, fileCategories = []) {
   const batches = await getAllBatches();
   const index = batches.findIndex((batch) => batch.id === batchId);
   if (index === -1) {
@@ -115,8 +190,39 @@ async function appendDocuments(user, batchId, files) {
     return null;
   }
 
-  const docs = mapDocuments(files);
-  batch.docs = [...batch.docs, ...docs];
+  // Ensure documents structure exists
+  if (!batch.documents) {
+    batch.documents = {
+      productDocuments: [],
+      labReports: [],
+      certifications: [],
+      complianceDocs: [],
+      packagingPhotos: [],
+      general: [],
+    };
+  }
+
+  // Organize new documents
+  const newDocs = organizeDocumentsByCategory(files, fileCategories);
+  
+  // Merge with existing documents
+  batch.documents.productDocuments = [...(batch.documents.productDocuments || []), ...newDocs.productDocuments];
+  batch.documents.labReports = [...(batch.documents.labReports || []), ...newDocs.labReports];
+  batch.documents.certifications = [...(batch.documents.certifications || []), ...newDocs.certifications];
+  batch.documents.complianceDocs = [...(batch.documents.complianceDocs || []), ...newDocs.complianceDocs];
+  batch.documents.packagingPhotos = [...(batch.documents.packagingPhotos || []), ...newDocs.packagingPhotos];
+  batch.documents.general = [...(batch.documents.general || []), ...newDocs.general];
+  
+  // Update flat docs array for backward compatibility
+  batch.docs = [
+    ...batch.documents.productDocuments,
+    ...batch.documents.labReports,
+    ...batch.documents.certifications,
+    ...batch.documents.complianceDocs,
+    ...batch.documents.packagingPhotos,
+    ...batch.documents.general,
+  ];
+  
   batch.updatedAt = new Date().toISOString();
   batch.history = Array.isArray(batch.history) ? batch.history : [];
   batch.history.push({

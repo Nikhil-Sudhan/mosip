@@ -2,6 +2,8 @@ const path = require('path');
 const { ensureJSON, readJSON, writeJSON } = require('../lib/fileStore');
 const credentialService = require('./credentialService');
 const auditService = require('./auditService');
+const injiCertifyService = require('./injiCertifyService');
+const config = require('../config');
 
 const ACTIVITY_FILE = path.join(__dirname, '..', 'data', 'verifications.json');
 
@@ -51,7 +53,7 @@ function summarizeCredential(credentialRecord) {
   };
 }
 
-function evaluateRecord(credentialRecord) {
+async function evaluateRecord(credentialRecord, accessToken = null) {
   if (!credentialRecord) {
     return {
       verdict: 'NOT_FOUND',
@@ -68,12 +70,34 @@ function evaluateRecord(credentialRecord) {
   const expiresAt = new Date(credentialRecord.expiresAt);
   const isExpired = now > expiresAt;
   const isRevoked = credentialRecord.status === 'REVOKED';
-  const expectedSignature = computeSignatureSeed(
-    credentialRecord.id,
-    credentialRecord.issuedAt
-  );
-  const signatureValid =
-    credentialRecord.credentialJson?.proof?.jws === expectedSignature;
+  
+  let signatureValid = false;
+  
+  // Use INJI Certify verification if available
+  if (accessToken && config.injiCertify.baseUrl && config.injiCertify.apiKey && credentialRecord.credentialJson) {
+    try {
+      const verificationResult = await injiCertifyService.verifyCredential(
+        credentialRecord.credentialJson,
+        accessToken
+      );
+      signatureValid = verificationResult.verified === true;
+    } catch (error) {
+      // Fallback to simple check if INJI verification fails
+      console.warn('INJI verification failed, using fallback:', error.message);
+      const expectedSignature = computeSignatureSeed(
+        credentialRecord.id,
+        credentialRecord.issuedAt
+      );
+      signatureValid = credentialRecord.credentialJson?.proof?.jws === expectedSignature;
+    }
+  } else {
+    // Fallback: Simple signature check (for backward compatibility)
+    const expectedSignature = computeSignatureSeed(
+      credentialRecord.id,
+      credentialRecord.issuedAt
+    );
+    signatureValid = credentialRecord.credentialJson?.proof?.jws === expectedSignature;
+  }
 
   let verdict = 'VALID';
   if (!signatureValid) {
@@ -103,9 +127,9 @@ async function appendActivity(entry) {
   await saveActivityLog(trimmed);
 }
 
-async function verifyCredentialById(credentialId, actor = null) {
+async function verifyCredentialById(credentialId, actor = null, accessToken = null) {
   const credentialRecord = await credentialService.getCredentialById(credentialId);
-  const evaluation = evaluateRecord(credentialRecord);
+  const evaluation = await evaluateRecord(credentialRecord, accessToken);
   await appendActivity({
     id: `${Date.now()}-${Math.round(Math.random() * 1e6)}`,
     credentialId,
@@ -125,7 +149,7 @@ async function verifyCredentialById(credentialId, actor = null) {
   return evaluation;
 }
 
-function evaluateUploadedCredential(credentialJson) {
+async function evaluateUploadedCredential(credentialJson, accessToken = null) {
   if (!credentialJson || typeof credentialJson !== 'object') {
     return {
       verdict: 'INVALID_SCHEMA',
@@ -142,13 +166,38 @@ function evaluateUploadedCredential(credentialJson) {
   const expiresAt = credentialJson.expirationDate;
   const now = new Date();
   const isExpired = expiresAt ? now > new Date(expiresAt) : false;
-  const expectedSignature =
-    credentialJson.id && issuedAt
-      ? computeSignatureSeed(credentialJson.id, issuedAt)
-      : null;
-  const signatureValid =
-    Boolean(expectedSignature) &&
-    credentialJson.proof?.jws === expectedSignature;
+  
+  let signatureValid = false;
+  
+  // Use INJI Certify verification if available
+  if (accessToken && config.injiCertify.baseUrl && config.injiCertify.apiKey) {
+    try {
+      const verificationResult = await injiCertifyService.verifyCredential(
+        credentialJson,
+        accessToken
+      );
+      signatureValid = verificationResult.verified === true;
+    } catch (error) {
+      // Fallback to simple check if INJI verification fails
+      console.warn('INJI verification failed, using fallback:', error.message);
+      const expectedSignature =
+        credentialJson.id && issuedAt
+          ? computeSignatureSeed(credentialJson.id, issuedAt)
+          : null;
+      signatureValid =
+        Boolean(expectedSignature) &&
+        credentialJson.proof?.jws === expectedSignature;
+    }
+  } else {
+    // Fallback: Simple signature check
+    const expectedSignature =
+      credentialJson.id && issuedAt
+        ? computeSignatureSeed(credentialJson.id, issuedAt)
+        : null;
+    signatureValid =
+      Boolean(expectedSignature) &&
+      credentialJson.proof?.jws === expectedSignature;
+  }
 
   const summary = {
     issuer: credentialJson.issuer,
@@ -185,8 +234,8 @@ function evaluateUploadedCredential(credentialJson) {
   };
 }
 
-async function verifyCredentialUpload(credentialJson, actor = null) {
-  const evaluation = evaluateUploadedCredential(credentialJson);
+async function verifyCredentialUpload(credentialJson, actor = null, accessToken = null) {
+  const evaluation = await evaluateUploadedCredential(credentialJson, accessToken);
   await auditService.logAction('verification.upload', {
     userId: actor?.id || null,
     role: actor?.role || 'ANON',

@@ -19,13 +19,27 @@ router.get('/:id', show);
 router.post(
   '/',
   roleGuard(['EXPORTER', 'ADMIN']),
-  upload.array('documents', 5),
+  upload.fields([
+    { name: 'productDocuments', maxCount: 10 },
+    { name: 'labReports', maxCount: 10 },
+    { name: 'certifications', maxCount: 10 },
+    { name: 'complianceDocs', maxCount: 10 },
+    { name: 'packagingPhotos', maxCount: 10 },
+    { name: 'documents', maxCount: 10 }, // General/backward compatibility
+  ]),
   create
 );
 router.post(
   '/:id/documents',
   roleGuard(['EXPORTER', 'ADMIN']),
-  upload.array('documents', 5),
+  upload.fields([
+    { name: 'productDocuments', maxCount: 10 },
+    { name: 'labReports', maxCount: 10 },
+    { name: 'certifications', maxCount: 10 },
+    { name: 'complianceDocs', maxCount: 10 },
+    { name: 'packagingPhotos', maxCount: 10 },
+    { name: 'documents', maxCount: 10 }, // General/backward compatibility
+  ]),
   addDocuments
 );
 router.post(

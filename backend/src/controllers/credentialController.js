@@ -4,9 +4,13 @@ const credentialService = require('../services/credentialService');
 
 const issue = asyncHandler(async (req, res) => {
   try {
+    // Get eSignet access token from request headers or user session
+    const esignetAccessToken = req.headers['x-esignet-token'] || req.user?.esignetAccessToken || null;
+    
     const credential = await credentialService.issueCredential(
       req.user,
-      req.params.batchId
+      req.params.batchId,
+      esignetAccessToken
     );
     return res
       .status(201)
