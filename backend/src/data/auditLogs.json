@@ -82,5 +82,42 @@
       "batchId": "233e5a33-9bb3-4a58-b2b3-cdc9404501a7"
     },
     "createdAt": "2025-11-23T12:23:54.979Z"
+  },
+  {
+    "id": "1764159850454-830422",
+    "action": "batch.submitted",
+    "userId": "bba5944e-8462-42d7-a55a-195a9889d0c6",
+    "role": "EXPORTER",
+    "entityType": "BATCH",
+    "entityId": "3278c674-8189-4a79-b356-ee92e1e9b6a7",
+    "metadata": {
+      "productType": "deasdsdasd",
+      "batchNumber": "dasdsa"
+    },
+    "createdAt": "2025-11-26T12:24:10.454Z"
+  },
+  {
+    "id": "1764159885275-341565",
+    "action": "inspection.recorded",
+    "userId": "admin-gmail-user-id-12345",
+    "role": "ADMIN",
+    "entityType": "BATCH",
+    "entityId": "3278c674-8189-4a79-b356-ee92e1e9b6a7",
+    "metadata": {
+      "result": "PASS"
+    },
+    "createdAt": "2025-11-26T12:24:45.275Z"
+  },
+  {
+    "id": "1764159890696-192050",
+    "action": "credential.issued",
+    "userId": "admin-gmail-user-id-12345",
+    "role": "ADMIN",
+    "entityType": "CREDENTIAL",
+    "entityId": "9d7444e7-e381-41ac-92ca-89652c82cfbd",
+    "metadata": {
+      "batchId": "3278c674-8189-4a79-b356-ee92e1e9b6a7"
+    },
+    "createdAt": "2025-11-26T12:24:50.696Z"
   }
 ]

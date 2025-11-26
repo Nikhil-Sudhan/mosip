@@ -191,5 +191,132 @@
     ],
     "createdAt": "2025-11-23T12:23:30.662Z",
     "updatedAt": "2025-11-23T12:23:54.977Z"
+  },
+  {
+    "id": "3278c674-8189-4a79-b356-ee92e1e9b6a7",
+    "exporterId": "bba5944e-8462-42d7-a55a-195a9889d0c6",
+    "productType": "deasdsdasd",
+    "grade": "",
+    "variety": "",
+    "batchNumber": "dasdsa",
+    "quantity": 1000,
+    "unit": "kg",
+    "weight": null,
+    "weightUnit": "kg",
+    "farmAddress": "",
+    "farmerDetails": "",
+    "harvestDate": "2025-11-06",
+    "organicStatus": "NON_ORGANIC",
+    "containerDetails": "",
+    "originCountry": "asdsada",
+    "destinationCountry": "sdsads",
+    "notes": "",
+    "status": "CERTIFIED",
+    "documents": {
+      "productDocuments": [],
+      "labReports": [
+        {
+          "id": "8c716285-5b5b-4256-ad9a-a8cf060421b4",
+          "originalName": "WhatsApp Image 2025-11-25 at 14.36.25_a8ac7f4e.jpg",
+          "mimeType": "image/jpeg",
+          "size": 55029,
+          "path": "1764159850413-216449336.jpg",
+          "url": "/uploads/1764159850413-216449336.jpg",
+          "category": "labReports",
+          "uploadedAt": "2025-11-26T12:24:10.452Z"
+        }
+      ],
+      "certifications": [
+        {
+          "id": "572ef7af-0692-492c-bcd2-d370012ff8a7",
+          "originalName": "WhatsApp Image 2025-11-16 at 17.01.20_ae511cac.jpg",
+          "mimeType": "image/jpeg",
+          "size": 102607,
+          "path": "1764159850414-646669796.jpg",
+          "url": "/uploads/1764159850414-646669796.jpg",
+          "category": "certifications",
+          "uploadedAt": "2025-11-26T12:24:10.452Z"
+        }
+      ],
+      "complianceDocs": [
+        {
+          "id": "94f14a79-60d0-4a82-984f-b5e7035c7f82",
+          "originalName": "Gemini_Generated_Image_5lpyl85lpyl85lpy.png",
+          "mimeType": "image/png",
+          "size": 1799931,
+          "path": "1764159850415-962650227.png",
+          "url": "/uploads/1764159850415-962650227.png",
+          "category": "complianceDocs",
+          "uploadedAt": "2025-11-26T12:24:10.452Z"
+        }
+      ],
+      "packagingPhotos": [],
+      "general": []
+    },
+    "docs": [
+      {
+        "id": "8c716285-5b5b-4256-ad9a-a8cf060421b4",
+        "originalName": "WhatsApp Image 2025-11-25 at 14.36.25_a8ac7f4e.jpg",
+        "mimeType": "image/jpeg",
+        "size": 55029,
+        "path": "1764159850413-216449336.jpg",
+        "url": "/uploads/1764159850413-216449336.jpg",
+        "category": "labReports",
+        "uploadedAt": "2025-11-26T12:24:10.452Z"
+      },
+      {
+        "id": "572ef7af-0692-492c-bcd2-d370012ff8a7",
+        "originalName": "WhatsApp Image 2025-11-16 at 17.01.20_ae511cac.jpg",
+        "mimeType": "image/jpeg",
+        "size": 102607,
+        "path": "1764159850414-646669796.jpg",
+        "url": "/uploads/1764159850414-646669796.jpg",
+        "category": "certifications",
+        "uploadedAt": "2025-11-26T12:24:10.452Z"
+      },
+      {
+        "id": "94f14a79-60d0-4a82-984f-b5e7035c7f82",
+        "originalName": "Gemini_Generated_Image_5lpyl85lpyl85lpy.png",
+        "mimeType": "image/png",
+        "size": 1799931,
+        "path": "1764159850415-962650227.png",
+        "url": "/uploads/1764159850415-962650227.png",
+        "category": "complianceDocs",
+        "uploadedAt": "2025-11-26T12:24:10.452Z"
+      }
+    ],
+    "inspection": {
+      "moisturePercent": 11.3,
+      "pesticidePPM": 0.05,
+      "organicStatus": "India Organic Certified",
+      "isoCode": "ISO 22000",
+      "result": "PASS",
+      "notes": "",
+      "inspectorId": "admin-gmail-user-id-12345",
+      "inspectorOrg": "Agency",
+      "recordedAt": "2025-11-26T12:24:45.268Z"
+    },
+    "history": [
+      {
+        "id": "3d641142-c15c-40bd-960a-3c037acda4de",
+        "status": "SUBMITTED",
+        "message": "Batch submitted by exporter",
+        "createdAt": "2025-11-26T12:24:10.452Z"
+      },
+      {
+        "id": "e364a6f3-dc81-48cc-8b75-bdb6418ce856",
+        "status": "INSPECTED",
+        "message": "Inspection recorded (PASS)",
+        "createdAt": "2025-11-26T12:24:45.268Z"
+      },
+      {
+        "id": "93a65d01-e829-416a-95fb-ce02bb915457",
+        "status": "CERTIFIED",
+        "message": "Credential issued by Agency",
+        "createdAt": "2025-11-26T12:24:50.694Z"
+      }
+    ],
+    "createdAt": "2025-11-26T12:24:10.452Z",
+    "updatedAt": "2025-11-26T12:24:50.694Z"
   }
 ]

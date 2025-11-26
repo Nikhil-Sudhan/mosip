@@ -58,5 +58,10 @@
     "userId": "bba5944e-8462-42d7-a55a-195a9889d0c6",
     "tokenHash": "05c72e783f89769c9d721410323bf311f0542463eede2e0d924d709582b3e45a",
     "expiresAt": "2025-11-30T23:19:34.809Z"
+  },
+  {
+    "userId": "admin-gmail-user-id-12345",
+    "tokenHash": "66435b28a2fd2dbe7dba85f4caf41b4b94c819742b201320b509c0f085dfa304",
+    "expiresAt": "2025-12-03T12:24:22.965Z"
   }
 ]

@@ -38,7 +38,6 @@ export default function BatchForm({ onSubmit, isSubmitting }) {
     handleSubmit,
     formState: { errors },
     reset,
-    trigger,
   } = useForm({
     resolver: zodResolver(schema),
     mode: 'onChange',
@@ -166,21 +165,6 @@ export default function BatchForm({ onSubmit, isSubmitting }) {
       return;
     }
     
-    // Validate all form fields
-    const formValid = await trigger();
-    if (!formValid) {
-      // Scroll to first error
-      const firstError = Object.keys(errors)[0];
-      if (firstError) {
-        const errorElement = document.querySelector(`[name="${firstError}"]`);
-        if (errorElement) {
-          errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-      }
-      alert('Please fill in all required fields before submitting.');
-      return;
-    }
-    
     const formData = new FormData();
     
     // Add all form fields
@@ -197,19 +181,24 @@ export default function BatchForm({ onSubmit, isSubmitting }) {
       });
     });
 
-    await onSubmit(formData);
-    reset();
-    setFileInputs({
-      productDocuments: [],
-      packagingPhotos: [],
-      labReports: [],
-      certifications: [],
-      complianceDocs: [],
-    });
-    // Reset file inputs
-    document.querySelectorAll('input[type="file"]').forEach(input => {
-      input.value = '';
-    });
+    try {
+      await onSubmit(formData);
+      reset();
+      setFileInputs({
+        productDocuments: [],
+        packagingPhotos: [],
+        labReports: [],
+        certifications: [],
+        complianceDocs: [],
+      });
+      // Reset file inputs
+      document.querySelectorAll('input[type="file"]').forEach(input => {
+        input.value = '';
+      });
+    } catch (error) {
+      // Error is handled by the parent component
+      console.error('Form submission error:', error);
+    }
   };
 
   const renderFileInput = (category, label, description, required = false, inputKey = null) => {
