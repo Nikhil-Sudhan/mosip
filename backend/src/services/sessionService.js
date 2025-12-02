@@ -1,65 +1,57 @@
 const crypto = require('crypto');
-const path = require('path');
 const ms = require('ms');
-const { ensureJSON, readJSON, writeJSON } = require('../lib/fileStore');
+const { pool } = require('../db');
 const config = require('../config');
 
-const SESSIONS_FILE = path.join(__dirname, '..', 'data', 'sessions.json');
-
-async function initStore() {
-  await ensureJSON(SESSIONS_FILE, []);
-}
+/**
+ * Session Service - Handles refresh token management with PostgreSQL
+ */
 
 function hashToken(token) {
   return crypto.createHash('sha256').update(token).digest('hex');
 }
 
-async function getSessions() {
-  return readJSON(SESSIONS_FILE);
-}
-
-async function saveSessions(sessions) {
-  await writeJSON(SESSIONS_FILE, sessions);
-}
-
 async function storeRefreshToken(userId, token) {
-  await initStore();
-  const sessions = await getSessions();
-  const expiresAt = new Date(Date.now() + ms(config.refreshTokenTtl)).toISOString();
-  sessions.push({
-    userId,
-    tokenHash: hashToken(token),
-    expiresAt,
-  });
-  await saveSessions(sessions);
+  const expiresAt = new Date(Date.now() + ms(config.refreshTokenTtl));
+  
+  await pool.query(`
+    INSERT INTO sessions (user_id, token_hash, expires_at)
+    VALUES ($1, $2, $3)
+  `, [userId, hashToken(token), expiresAt]);
 }
 
 async function isRefreshTokenValid(userId, token) {
-  await initStore();
-  const sessions = await getSessions();
-  const now = Date.now();
-  return sessions.some(
-    (session) =>
-      session.userId === userId &&
-      session.tokenHash === hashToken(token) &&
-      new Date(session.expiresAt).getTime() > now
-  );
+  const result = await pool.query(`
+    SELECT id FROM sessions
+    WHERE user_id = $1
+      AND token_hash = $2
+      AND expires_at > NOW()
+    LIMIT 1
+  `, [userId, hashToken(token)]);
+  
+  return result.rows.length > 0;
 }
 
 async function revokeRefreshToken(token) {
-  await initStore();
-  const sessions = await getSessions();
-  const filtered = sessions.filter(
-    (session) => session.tokenHash !== hashToken(token)
-  );
-  await saveSessions(filtered);
+  await pool.query(`
+    DELETE FROM sessions
+    WHERE token_hash = $1
+  `, [hashToken(token)]);
 }
 
 async function revokeAllTokensForUser(userId) {
-  await initStore();
-  const sessions = await getSessions();
-  const filtered = sessions.filter((session) => session.userId !== userId);
-  await saveSessions(filtered);
+  await pool.query(`
+    DELETE FROM sessions
+    WHERE user_id = $1
+  `, [userId]);
+}
+
+// Clean up expired sessions periodically
+async function cleanupExpiredSessions() {
+  await pool.query(`
+    DELETE FROM sessions
+    WHERE expires_at < NOW()
+  `);
 }
 
 module.exports = {
@@ -67,8 +59,5 @@ module.exports = {
   isRefreshTokenValid,
   revokeRefreshToken,
   revokeAllTokensForUser,
+  cleanupExpiredSessions,
 };
-
-
-
-

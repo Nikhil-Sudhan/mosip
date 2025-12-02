@@ -1,6 +1,6 @@
 const roleMap = {
   ADMIN: '/admin',
-  QA: '/admin',
+  QA: '/qa',
   EXPORTER: '/exporter',
   CUSTOMS: '/customs',
   IMPORTER: '/customs',

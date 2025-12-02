@@ -1,24 +1,13 @@
-const path = require('path');
-const { ensureJSON, readJSON, writeJSON } = require('../lib/fileStore');
+const { pool } = require('../db');
+const axios = require('axios');
 const credentialService = require('./credentialService');
 const auditService = require('./auditService');
 const injiCertifyService = require('./injiCertifyService');
 const config = require('../config');
 
-const ACTIVITY_FILE = path.join(__dirname, '..', 'data', 'verifications.json');
-
-async function ensureActivityStore() {
-  await ensureJSON(ACTIVITY_FILE, []);
-}
-
-async function getActivityLog() {
-  await ensureActivityStore();
-  return readJSON(ACTIVITY_FILE, []);
-}
-
-async function saveActivityLog(entries) {
-  await writeJSON(ACTIVITY_FILE, entries);
-}
+/**
+ * Verification Service - Handles credential verification with PostgreSQL and Inji Verify
+ */
 
 function base64Url(value) {
   return Buffer.from(value)
@@ -53,6 +42,31 @@ function summarizeCredential(credentialRecord) {
   };
 }
 
+/**
+ * Verify credential using Inji Verify API if available
+ */
+async function verifyWithInjiVerify(credentialId, accessToken) {
+  if (!config.injiVerify.baseUrl || !config.injiVerify.apiKey) {
+    return null;
+  }
+
+  try {
+    const response = await axios.get(
+      `${config.injiVerify.baseUrl}/api/v1/verify/${credentialId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'X-API-Key': config.injiVerify.apiKey,
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.warn('Inji Verify API call failed:', error.message);
+    return null;
+  }
+}
+
 async function evaluateRecord(credentialRecord, accessToken = null) {
   if (!credentialRecord) {
     return {
@@ -73,8 +87,16 @@ async function evaluateRecord(credentialRecord, accessToken = null) {
   
   let signatureValid = false;
   
-  // Use INJI Certify verification if available
-  if (accessToken && config.injiCertify.baseUrl && config.injiCertify.apiKey && credentialRecord.credentialJson) {
+  // Try Inji Verify first if available
+  if (accessToken && config.injiVerify.baseUrl && credentialRecord.id) {
+    const injiResult = await verifyWithInjiVerify(credentialRecord.id, accessToken);
+    if (injiResult && injiResult.verified === true) {
+      signatureValid = true;
+    }
+  }
+
+  // Fallback to Inji Certify verification
+  if (!signatureValid && accessToken && config.injiCertify.baseUrl && config.injiCertify.apiKey && credentialRecord.credentialJson) {
     try {
       const verificationResult = await injiCertifyService.verifyCredential(
         credentialRecord.credentialJson,
@@ -90,7 +112,7 @@ async function evaluateRecord(credentialRecord, accessToken = null) {
       );
       signatureValid = credentialRecord.credentialJson?.proof?.jws === expectedSignature;
     }
-  } else {
+  } else if (!signatureValid) {
     // Fallback: Simple signature check (for backward compatibility)
     const expectedSignature = computeSignatureSeed(
       credentialRecord.id,
@@ -121,24 +143,30 @@ async function evaluateRecord(credentialRecord, accessToken = null) {
 }
 
 async function appendActivity(entry) {
-  const log = await getActivityLog();
-  log.push(entry);
-  const trimmed = log.slice(-100);
-  await saveActivityLog(trimmed);
+  await pool.query(`
+    INSERT INTO verification_activity (credential_id, verdict, actor, product, route)
+    VALUES ($1, $2, $3, $4, $5)
+  `, [
+    entry.credentialId,
+    entry.verdict,
+    entry.actor || 'ANON',
+    entry.product || null,
+    entry.route || null,
+  ]);
 }
 
 async function verifyCredentialById(credentialId, actor = null, accessToken = null) {
   const credentialRecord = await credentialService.getCredentialById(credentialId);
   const evaluation = await evaluateRecord(credentialRecord, accessToken);
+  
   await appendActivity({
-    id: `${Date.now()}-${Math.round(Math.random() * 1e6)}`,
     credentialId,
     verdict: evaluation.verdict,
-    checkedAt: new Date().toISOString(),
     actor: actor?.role || 'ANON',
     product: evaluation.summary?.productName || null,
     route: evaluation.summary?.route || null,
   });
+  
   await auditService.logAction('verification.performed', {
     userId: actor?.id || null,
     role: actor?.role || 'ANON',
@@ -146,6 +174,7 @@ async function verifyCredentialById(credentialId, actor = null, accessToken = nu
     entityId: credentialId,
     metadata: { verdict: evaluation.verdict },
   });
+  
   return evaluation;
 }
 
@@ -247,8 +276,21 @@ async function verifyCredentialUpload(credentialJson, actor = null, accessToken 
 }
 
 async function listActivity(limit = 20) {
-  const log = await getActivityLog();
-  return log.slice(-limit).reverse();
+  const result = await pool.query(`
+    SELECT * FROM verification_activity
+    ORDER BY checked_at DESC
+    LIMIT $1
+  `, [limit]);
+  
+  return result.rows.map(row => ({
+    id: row.id,
+    credentialId: row.credential_id,
+    verdict: row.verdict,
+    actor: row.actor,
+    product: row.product,
+    route: row.route,
+    checkedAt: row.checked_at,
+  }));
 }
 
 module.exports = {
@@ -256,4 +298,3 @@ module.exports = {
   verifyCredentialUpload,
   listActivity,
 };
-

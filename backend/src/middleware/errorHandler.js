@@ -7,7 +7,8 @@ function notFound(req, res, next) {
 
 function errorHandler(err, req, res, next) {
   // eslint-disable-next-line no-console
-  console.error(err);
+  console.error('Error:', err);
+  console.error('Stack:', err.stack);
 
   if (err.name === 'ZodError') {
     return res.status(400).json({
@@ -16,6 +17,17 @@ function errorHandler(err, req, res, next) {
         code: 'VALIDATION_ERROR',
         message: 'Invalid request payload',
         details: err.errors,
+      },
+    });
+  }
+
+  // Database connection errors
+  if (err.code === 'ECONNREFUSED' || err.code === 'ENOTFOUND') {
+    return res.status(503).json({
+      success: false,
+      error: {
+        code: 'DATABASE_ERROR',
+        message: 'Database connection failed. Please check your database configuration.',
       },
     });
   }

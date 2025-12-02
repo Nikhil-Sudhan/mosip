@@ -1,77 +1,65 @@
-const path = require('path');
+const { pool } = require('../db');
 const { v4: uuid } = require('uuid');
-const { readJSON, writeJSON, ensureJSON } = require('../lib/fileStore');
 const { hashPassword } = require('../utils/password');
 const config = require('../config');
 
-const USERS_FILE = path.join(__dirname, '..', 'data', 'users.json');
-
-async function initStore() {
-  await ensureJSON(USERS_FILE, []);
-}
-
-async function getUsers() {
-  return readJSON(USERS_FILE);
-}
-
-async function saveUsers(users) {
-  await writeJSON(USERS_FILE, users);
-}
+/**
+ * User Service - Handles user management with PostgreSQL
+ */
 
 async function findByEmail(email) {
-  const users = await getUsers();
-  return users.find(
-    (user) => user.email.toLowerCase() === email.toLowerCase()
+  const result = await pool.query(
+    'SELECT id, email, password_hash, role, organization, created_at, updated_at FROM users WHERE email = $1',
+    [email.toLowerCase()]
   );
+  const user = result.rows[0];
+  if (user) {
+    // Map password_hash to passwordHash for consistency
+    user.passwordHash = user.password_hash;
+    delete user.password_hash;
+  }
+  return user || null;
 }
 
 async function findById(id) {
-  const users = await getUsers();
-  return users.find((user) => user.id === id);
+  const result = await pool.query(
+    'SELECT id, email, password_hash, role, organization, created_at, updated_at FROM users WHERE id = $1',
+    [id]
+  );
+  return result.rows[0] || null;
 }
 
 async function createUser({ email, password, role, organization }) {
-  const now = new Date().toISOString();
-  const users = await getUsers();
-  if (users.some((user) => user.email.toLowerCase() === email.toLowerCase())) {
-    throw new Error('User already exists');
-  }
-
-  const newUser = {
-    id: uuid(),
-    email: email.toLowerCase(),
-    passwordHash: await hashPassword(password),
-    role,
-    organization: organization || '',
-    isActive: true,
-    createdAt: now,
-    updatedAt: now,
-  };
-
-  users.push(newUser);
-  await saveUsers(users);
-  return { ...newUser, passwordHash: undefined };
+  const passwordHash = await hashPassword(password);
+  
+  const result = await pool.query(`
+    INSERT INTO users (email, password_hash, role, organization)
+    VALUES ($1, $2, $3, $4)
+    RETURNING id, email, role, organization, created_at, updated_at
+  `, [email.toLowerCase(), passwordHash, role, organization || '']);
+  
+  return result.rows[0];
 }
 
 async function seedAdminIfMissing() {
-  await initStore();
-  const users = await getUsers();
-  const adminExists = users.some((user) => user.role === 'ADMIN');
+  const result = await pool.query(
+    'SELECT id FROM users WHERE role = $1',
+    ['ADMIN']
+  );
 
-  if (!adminExists) {
-    const now = new Date().toISOString();
-    const adminUser = {
-      id: uuid(),
-      email: config.defaultAdminEmail.toLowerCase(),
-      passwordHash: await hashPassword(config.defaultAdminPassword),
-      role: 'ADMIN',
-      organization: 'AgriQCert HQ',
-      isActive: true,
-      createdAt: now,
-      updatedAt: now,
-    };
-    users.push(adminUser);
-    await saveUsers(users);
+  if (result.rows.length === 0) {
+    const passwordHash = await hashPassword(config.defaultAdminPassword);
+    const adminResult = await pool.query(`
+      INSERT INTO users (email, password_hash, role, organization)
+      VALUES ($1, $2, $3, $4)
+      RETURNING id, email, role, organization
+    `, [
+      config.defaultAdminEmail.toLowerCase(),
+      passwordHash,
+      'ADMIN',
+      'AgriQCert HQ',
+    ]);
+    
     return {
       seeded: true,
       credentials: {
@@ -84,13 +72,14 @@ async function seedAdminIfMissing() {
   return { seeded: false };
 }
 
+async function getUserById(id) {
+  return findById(id);
+}
+
 module.exports = {
-  initStore,
-  getUsers,
-  saveUsers,
   findByEmail,
   findById,
   createUser,
   seedAdminIfMissing,
+  getUserById,
 };
-

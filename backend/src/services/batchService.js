@@ -1,66 +1,11 @@
-const path = require('path');
+const { pool } = require('../db');
 const { v4: uuid } = require('uuid');
-const { ensureJSON, readJSON, writeJSON } = require('../lib/fileStore');
 const auditService = require('./auditService');
+const qaAgencyService = require('./qaAgencyService');
 
-const BATCHES_FILE = path.join(__dirname, '..', 'data', 'batches.json');
-
-async function initStore() {
-  await ensureJSON(BATCHES_FILE, []);
-}
-
-async function getAllBatches() {
-  await initStore();
-  return readJSON(BATCHES_FILE);
-}
-
-async function saveBatches(batches) {
-  await writeJSON(BATCHES_FILE, batches);
-}
-
-function filterByRole(user, batches) {
-  if (user.role === 'ADMIN' || user.role === 'QA') {
-    return batches;
-  }
-  return batches.filter((batch) => batch.exporterId === user.id);
-}
-
-async function listBatchesForUser(user) {
-  const batches = await getAllBatches();
-  return filterByRole(user, batches);
-}
-
-function canViewBatch(user, batch) {
-  if (!batch) return false;
-  return (
-    user.role === 'ADMIN' ||
-    user.role === 'QA' ||
-    batch.exporterId === user.id
-  );
-}
-
-async function getBatchById(user, batchId) {
-  const batches = await getAllBatches();
-  const batch = batches.find((item) => item.id === batchId);
-  if (!canViewBatch(user, batch)) {
-    return null;
-  }
-  return batch;
-}
-
-function mapDocuments(files = [], category = 'general') {
-  const now = new Date().toISOString();
-  return files.map((file) => ({
-    id: uuid(),
-    originalName: file.originalname,
-    mimeType: file.mimetype,
-    size: file.size,
-    path: file.filename,
-    url: `/uploads/${file.filename}`,
-    category: category,
-    uploadedAt: now,
-  }));
-}
+/**
+ * Batch Service - Handles batch management with PostgreSQL
+ */
 
 function organizeDocumentsByCategory(files, fileCategories) {
   const organized = {
@@ -72,7 +17,6 @@ function organizeDocumentsByCategory(files, fileCategories) {
     general: [],
   };
 
-  // Map files to categories based on field names
   files.forEach((file, index) => {
     const category = fileCategories[index] || 'general';
     const doc = {
@@ -104,204 +48,417 @@ function organizeDocumentsByCategory(files, fileCategories) {
   return organized;
 }
 
-async function createBatch(user, payload, files, fileCategories = []) {
-  const batches = await getAllBatches();
-  const now = new Date().toISOString();
-  
-  // Organize documents by category
-  const organizedDocs = organizeDocumentsByCategory(files, fileCategories);
-  
-  // Flatten all documents for backward compatibility
-  const allDocuments = [
-    ...organizedDocs.productDocuments,
-    ...organizedDocs.labReports,
-    ...organizedDocs.certifications,
-    ...organizedDocs.complianceDocs,
-    ...organizedDocs.packagingPhotos,
-    ...organizedDocs.general,
-  ];
+async function saveBatchDocuments(batchId, organizedDocs, client = null) {
+  const useTransaction = client !== null;
+  if (!client) {
+    client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+    } catch (error) {
+      client.release();
+      throw error;
+    }
+  }
 
-  const batch = {
-    id: uuid(),
-    exporterId: user.id,
-    // Product Batch Documents
-    productType: payload.productType,
-    grade: payload.grade || '',
-    variety: payload.variety || '',
-    batchNumber: payload.batchNumber,
-    quantity: payload.quantity,
-    unit: payload.unit,
-    weight: payload.weight || null,
-    weightUnit: payload.weightUnit || '',
-    
-    // Harvest/Farm Details
-    farmAddress: payload.farmAddress || '',
-    farmerDetails: payload.farmerDetails || '',
-    harvestDate: payload.harvestDate,
-    organicStatus: payload.organicStatus || 'NON_ORGANIC',
-    
-    // Packaging Details
-    containerDetails: payload.containerDetails || '',
-    
-    // Origin/Destination
-    originCountry: payload.originCountry,
-    destinationCountry: payload.destinationCountry,
-    
-    notes: payload.notes || '',
-    status: 'SUBMITTED',
-    
-    // Organized documents
-    documents: organizedDocs,
-    docs: allDocuments, // Backward compatibility
-    
-    inspection: null,
-    history: [
-      {
-        id: uuid(),
-        status: 'SUBMITTED',
-        message: 'Batch submitted by exporter',
-        createdAt: now,
-      },
-    ],
-    createdAt: now,
-    updatedAt: now,
+  try {
+    const allDocs = [
+      ...organizedDocs.productDocuments,
+      ...organizedDocs.labReports,
+      ...organizedDocs.certifications,
+      ...organizedDocs.complianceDocs,
+      ...organizedDocs.packagingPhotos,
+      ...organizedDocs.general,
+    ];
+
+    for (const doc of allDocs) {
+      await client.query(`
+        INSERT INTO batch_documents (batch_id, original_name, mime_type, size, path, url, category)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+      `, [
+        batchId,
+        doc.originalName,
+        doc.mimeType,
+        doc.size,
+        doc.path,
+        doc.url,
+        doc.category,
+      ]);
+    }
+
+    if (!useTransaction) {
+      await client.query('COMMIT');
+    }
+  } catch (error) {
+    if (!useTransaction) {
+      await client.query('ROLLBACK');
+    }
+    throw error;
+  } finally {
+    if (!useTransaction) {
+      client.release();
+    }
+  }
+}
+
+async function getBatchDocuments(batchId) {
+  const result = await pool.query(
+    'SELECT * FROM batch_documents WHERE batch_id = $1 ORDER BY uploaded_at ASC',
+    [batchId]
+  );
+  return result.rows;
+}
+
+async function getBatchHistory(batchId) {
+  const result = await pool.query(
+    'SELECT * FROM batch_history WHERE batch_id = $1 ORDER BY created_at ASC',
+    [batchId]
+  );
+  return result.rows;
+}
+
+async function addBatchHistory(batchId, status, message, client = null) {
+  const query = client || pool;
+  await query.query(`
+    INSERT INTO batch_history (batch_id, status, message)
+    VALUES ($1, $2, $3)
+  `, [batchId, status, message]);
+}
+
+function canViewBatch(user, batch) {
+  if (!batch) return false;
+  return (
+    user.role === 'ADMIN' ||
+    user.role === 'QA' ||
+    batch.exporter_id === user.id ||
+    batch.qa_agency_id === user.id
+  );
+}
+
+async function listBatchesForUser(user) {
+  let query = `
+    SELECT 
+      b.*,
+      e.email as exporter_email,
+      e.organization as exporter_organization,
+      qa.email as qa_email,
+      qa.organization as qa_organization
+    FROM batches b
+    LEFT JOIN users e ON b.exporter_id = e.id
+    LEFT JOIN users qa ON b.qa_agency_id = qa.id
+  `;
+  const params = [];
+
+  if (user.role === 'EXPORTER') {
+    query += ' WHERE b.exporter_id = $1';
+    params.push(user.id);
+  } else if (user.role === 'QA') {
+    query += ' WHERE b.qa_agency_id = $1';
+    params.push(user.id);
+  }
+  // ADMIN and others see all
+
+  query += ' ORDER BY b.created_at DESC';
+
+  const result = await pool.query(query, params);
+  
+  // Enrich with documents and history
+  const batches = await Promise.all(
+    result.rows.map(async (batch) => {
+      const [documents, history, inspection] = await Promise.all([
+        getBatchDocuments(batch.id),
+        getBatchHistory(batch.id),
+        getBatchInspection(batch.id),
+      ]);
+
+      // Organize documents by category
+      const organizedDocs = {
+        productDocuments: documents.filter(d => d.category.startsWith('product')),
+        labReports: documents.filter(d => d.category.startsWith('lab')),
+        certifications: documents.filter(d => d.category.startsWith('certification')),
+        complianceDocs: documents.filter(d => d.category.startsWith('compliance')),
+        packagingPhotos: documents.filter(d => d.category.startsWith('packaging')),
+        general: documents.filter(d => d.category === 'general'),
+      };
+
+      return {
+        ...batch,
+        exporterId: batch.exporter_id,
+        qaAgencyId: batch.qa_agency_id,
+        documents: organizedDocs,
+        docs: documents, // Backward compatibility
+        history: history,
+        inspection: inspection,
+      };
+    })
+  );
+
+  return batches;
+}
+
+async function getBatchById(user, batchId) {
+  const result = await pool.query(`
+    SELECT 
+      b.*,
+      e.email as exporter_email,
+      e.organization as exporter_organization,
+      qa.email as qa_email,
+      qa.organization as qa_organization
+    FROM batches b
+    LEFT JOIN users e ON b.exporter_id = e.id
+    LEFT JOIN users qa ON b.qa_agency_id = qa.id
+    WHERE b.id = $1
+  `, [batchId]);
+
+  if (result.rows.length === 0) {
+    return null;
+  }
+
+  const batch = result.rows[0];
+  if (!canViewBatch(user, batch)) {
+    return null;
+  }
+
+  const [documents, history, inspection] = await Promise.all([
+    getBatchDocuments(batch.id),
+    getBatchHistory(batch.id),
+    getBatchInspection(batch.id),
+  ]);
+
+  const organizedDocs = {
+    productDocuments: documents.filter(d => d.category.startsWith('product')),
+    labReports: documents.filter(d => d.category.startsWith('lab')),
+    certifications: documents.filter(d => d.category.startsWith('certification')),
+    complianceDocs: documents.filter(d => d.category.startsWith('compliance')),
+    packagingPhotos: documents.filter(d => d.category.startsWith('packaging')),
+    general: documents.filter(d => d.category === 'general'),
   };
 
-  batches.push(batch);
-  await saveBatches(batches);
-  await auditService.logAction('batch.submitted', {
-    userId: user.id,
-    role: user.role,
-    entityType: 'BATCH',
-    entityId: batch.id,
-    metadata: { productType: batch.productType, batchNumber: batch.batchNumber },
-  });
-  return batch;
+  return {
+    ...batch,
+    exporterId: batch.exporter_id,
+    qaAgencyId: batch.qa_agency_id,
+    documents: organizedDocs,
+    docs: documents,
+    history: history,
+    inspection: inspection,
+  };
+}
+
+async function getBatchInspection(batchId) {
+  const result = await pool.query(
+    `SELECT 
+      i.*,
+      u.email as inspector_email,
+      u.organization as inspector_organization
+    FROM inspections i
+    LEFT JOIN users u ON i.inspector_id = u.id
+    WHERE i.batch_id = $1
+    ORDER BY i.recorded_at DESC
+    LIMIT 1`,
+    [batchId]
+  );
+  return result.rows[0] || null;
+}
+
+async function createBatch(user, payload, files, fileCategories = []) {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    // Organize documents
+    const organizedDocs = organizeDocumentsByCategory(files, fileCategories);
+
+    // Create batch
+    const batchResult = await client.query(`
+      INSERT INTO batches (
+        exporter_id, product_type, grade, variety, batch_number,
+        quantity, unit, weight, weight_unit, farm_address, farmer_details,
+        harvest_date, organic_status, container_details,
+        origin_country, destination_country, notes, status
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, 'SUBMITTED')
+      RETURNING *
+    `, [
+      user.id,
+      payload.productType,
+      payload.grade || null,
+      payload.variety || null,
+      payload.batchNumber,
+      payload.quantity,
+      payload.unit,
+      payload.weight || null,
+      payload.weightUnit || null,
+      payload.farmAddress || null,
+      payload.farmerDetails || null,
+      payload.harvestDate,
+      payload.organicStatus || 'NON_ORGANIC',
+      payload.containerDetails || null,
+      payload.originCountry,
+      payload.destinationCountry,
+      payload.notes || null,
+    ]);
+
+    const batch = batchResult.rows[0];
+
+    // Save documents
+    if (files.length > 0) {
+      await saveBatchDocuments(batch.id, organizedDocs, client);
+    }
+
+    // Add history
+    await addBatchHistory(batch.id, 'SUBMITTED', 'Batch submitted by exporter', client);
+
+    // Match to QA agency
+    try {
+      const matchedQA = await qaAgencyService.matchBatchToQA({
+        productType: payload.productType,
+        id: batch.id,
+      });
+
+      if (matchedQA) {
+        // Update batch within the same transaction
+        await client.query(`
+          UPDATE batches
+          SET qa_agency_id = $1, inspection_requested_at = NOW(), status = 'QA_ASSIGNED'
+          WHERE id = $2
+        `, [matchedQA.user_id, batch.id]);
+        await addBatchHistory(batch.id, 'QA_ASSIGNED', 'Batch assigned to QA agency for inspection', client);
+      }
+    } catch (error) {
+      console.warn('QA matching failed:', error.message);
+      // Continue without QA assignment - don't rollback the entire transaction
+    }
+
+    await client.query('COMMIT');
+
+    // Audit log
+    await auditService.logAction('batch.submitted', {
+      userId: user.id,
+      role: user.role,
+      entityType: 'BATCH',
+      entityId: batch.id,
+      metadata: { productType: batch.product_type, batchNumber: batch.batch_number },
+    });
+
+    // Return enriched batch
+    return getBatchById(user, batch.id);
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
 }
 
 async function appendDocuments(user, batchId, files, fileCategories = []) {
-  const batches = await getAllBatches();
-  const index = batches.findIndex((batch) => batch.id === batchId);
-  if (index === -1) {
+  const batch = await getBatchById(user, batchId);
+  if (!batch) {
     return null;
   }
-  const batch = batches[index];
+
   if (batch.exporterId !== user.id && user.role !== 'ADMIN') {
     return null;
   }
 
-  // Ensure documents structure exists
-  if (!batch.documents) {
-    batch.documents = {
-      productDocuments: [],
-      labReports: [],
-      certifications: [],
-      complianceDocs: [],
-      packagingPhotos: [],
-      general: [],
-    };
-  }
+  const organizedDocs = organizeDocumentsByCategory(files, fileCategories);
+  await saveBatchDocuments(batchId, organizedDocs);
+  await addBatchHistory(batchId, batch.status, 'New supporting documents uploaded');
 
-  // Organize new documents
-  const newDocs = organizeDocumentsByCategory(files, fileCategories);
-  
-  // Merge with existing documents
-  batch.documents.productDocuments = [...(batch.documents.productDocuments || []), ...newDocs.productDocuments];
-  batch.documents.labReports = [...(batch.documents.labReports || []), ...newDocs.labReports];
-  batch.documents.certifications = [...(batch.documents.certifications || []), ...newDocs.certifications];
-  batch.documents.complianceDocs = [...(batch.documents.complianceDocs || []), ...newDocs.complianceDocs];
-  batch.documents.packagingPhotos = [...(batch.documents.packagingPhotos || []), ...newDocs.packagingPhotos];
-  batch.documents.general = [...(batch.documents.general || []), ...newDocs.general];
-  
-  // Update flat docs array for backward compatibility
-  batch.docs = [
-    ...batch.documents.productDocuments,
-    ...batch.documents.labReports,
-    ...batch.documents.certifications,
-    ...batch.documents.complianceDocs,
-    ...batch.documents.packagingPhotos,
-    ...batch.documents.general,
-  ];
-  
-  batch.updatedAt = new Date().toISOString();
-  batch.history = Array.isArray(batch.history) ? batch.history : [];
-  batch.history.push({
-    id: uuid(),
-    status: batch.status,
-    message: 'New supporting documents uploaded',
-    createdAt: batch.updatedAt,
-  });
-  batches[index] = batch;
-  await saveBatches(batches);
-  return batch;
+  return getBatchById(user, batchId);
 }
 
 async function recordInspection(user, batchId, payload) {
-  const batches = await getAllBatches();
-  const index = batches.findIndex((batch) => batch.id === batchId);
-  if (index === -1) {
+  const batch = await getBatchById(user, batchId);
+  if (!batch) {
     return null;
   }
-  const batch = batches[index];
+
   if (user.role !== 'QA' && user.role !== 'ADMIN') {
     return null;
   }
-  const now = new Date().toISOString();
-  batch.inspection = {
-    moisturePercent: payload.moisturePercent,
-    pesticidePPM: payload.pesticidePPM,
-    organicStatus: payload.organicStatus,
-    isoCode: payload.isoCode,
-    result: payload.result,
-    notes: payload.notes || '',
-    inspectorId: user.id,
-    inspectorOrg: user.organization || user.email,
-    recordedAt: now,
-  };
-  batch.status = payload.result === 'PASS' ? 'INSPECTED' : 'REJECTED';
-  batch.history = Array.isArray(batch.history) ? batch.history : [];
-  batch.history.push({
-    id: uuid(),
-    status: batch.status,
-    message: `Inspection recorded (${payload.result})`,
-    createdAt: now,
-  });
-  batch.updatedAt = now;
-  batches[index] = batch;
-  await saveBatches(batches);
-  await auditService.logAction('inspection.recorded', {
-    userId: user.id,
-    role: user.role,
-    entityType: 'BATCH',
-    entityId: batchId,
-    metadata: { result: payload.result },
-  });
-  return batch;
-}
 
-async function markBatchCertified(batchId, actor = {}) {
-  const batches = await getAllBatches();
-  const index = batches.findIndex((batch) => batch.id === batchId);
-  if (index === -1) {
+  // Check if QA agency matches
+  if (user.role === 'QA' && batch.qaAgencyId !== user.id) {
     return null;
   }
 
-  const batch = batches[index];
-  const now = new Date().toISOString();
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
 
-  batch.status = 'CERTIFIED';
-  batch.history = Array.isArray(batch.history) ? batch.history : [];
-  batch.history.push({
-    id: uuid(),
-    status: 'CERTIFIED',
-    message: `Credential issued by ${actor.organization || 'QA Team'}`,
-    createdAt: now,
-  });
-  batch.updatedAt = now;
+    // Create inspection record
+    await client.query(`
+      INSERT INTO inspections (
+        batch_id, inspector_id, moisture_percent, pesticide_ppm,
+        organic_status, iso_code, result, notes
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    `, [
+      batchId,
+      user.id,
+      payload.moisturePercent,
+      payload.pesticidePPM,
+      payload.organicStatus,
+      payload.isoCode,
+      payload.result,
+      payload.notes || null,
+    ]);
 
-  batches[index] = batch;
-  await saveBatches(batches);
-  return batch;
+    // Update batch status
+    const newStatus = payload.result === 'PASS' ? 'INSPECTED' : 'REJECTED';
+    await client.query(`
+      UPDATE batches
+      SET status = $1, updated_at = NOW()
+      WHERE id = $2
+    `, [newStatus, batchId]);
+
+    await addBatchHistory(batchId, newStatus, `Inspection recorded (${payload.result})`, client);
+
+    await client.query('COMMIT');
+
+    await auditService.logAction('inspection.recorded', {
+      userId: user.id,
+      role: user.role,
+      entityType: 'BATCH',
+      entityId: batchId,
+      metadata: { result: payload.result },
+    });
+
+    return getBatchById(user, batchId);
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+async function markBatchCertified(batchId, actor = {}) {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    await client.query(`
+      UPDATE batches
+      SET status = 'CERTIFIED', updated_at = NOW()
+      WHERE id = $1
+    `, [batchId]);
+
+    await addBatchHistory(
+      batchId,
+      'CERTIFIED',
+      `Credential issued by ${actor.organization || 'QA Team'}`,
+      client
+    );
+
+    await client.query('COMMIT');
+    return true;
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
 }
 
 module.exports = {
@@ -312,4 +469,3 @@ module.exports = {
   recordInspection,
   markBatchCertified,
 };
-

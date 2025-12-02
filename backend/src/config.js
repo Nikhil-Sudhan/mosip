@@ -15,6 +15,12 @@ const config = {
   verifyPortalUrl:
     process.env.VERIFY_PORTAL_URL || 'http://localhost:5173/verify',
   
+  // Database Configuration
+  database: {
+    url: process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/agriqcert',
+    ssl: process.env.DATABASE_SSL === 'true',
+  },
+  
   // eSignet Configuration
   esignet: {
     baseUrl: process.env.ESIGNET_BASE_URL || 'http://localhost:8080',
@@ -31,9 +37,16 @@ const config = {
     issuerDid: process.env.INJI_ISSUER_DID || 'did:example:qa-agency',
   },
   
+  // INJI Wallet Configuration
+  injiWallet: {
+    baseUrl: process.env.INJI_WALLET_BASE_URL || 'http://localhost:8083',
+    apiKey: process.env.INJI_WALLET_API_KEY || '',
+  },
+  
   // INJI Verify Configuration
   injiVerify: {
     baseUrl: process.env.INJI_VERIFY_BASE_URL || 'http://localhost:8082',
+    apiKey: process.env.INJI_VERIFY_API_KEY || '',
   },
 };
 

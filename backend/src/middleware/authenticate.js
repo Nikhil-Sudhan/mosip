@@ -18,10 +18,10 @@ async function authenticate(req, res, next) {
     const decoded = verifyAccessToken(token);
     const user = await findById(decoded.sub);
 
-    if (!user || !user.isActive) {
+    if (!user) {
       return res.status(401).json({
         success: false,
-        error: { code: 'USER_INACTIVE', message: 'User disabled or missing' },
+        error: { code: 'USER_NOT_FOUND', message: 'User not found' },
       });
     }
 

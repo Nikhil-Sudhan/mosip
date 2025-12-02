@@ -1,49 +1,43 @@
-const path = require('path');
-const { ensureJSON, readJSON, writeJSON } = require('../lib/fileStore');
+const { pool } = require('../db');
+const { v4: uuid } = require('uuid');
 
-const AUDIT_FILE = path.join(__dirname, '..', 'data', 'auditLogs.json');
-
-async function ensureAuditFile() {
-  await ensureJSON(AUDIT_FILE, []);
-}
-
-async function getAuditLogs() {
-  await ensureAuditFile();
-  return readJSON(AUDIT_FILE, []);
-}
-
-async function saveAuditLogs(logs) {
-  await writeJSON(AUDIT_FILE, logs);
-}
+/**
+ * Audit Service - Handles audit logging with PostgreSQL
+ */
 
 async function logAction(action, { userId, role, entityType, entityId, metadata }) {
-  const logs = await getAuditLogs();
-  logs.push({
-    id: `${Date.now()}-${Math.round(Math.random() * 1e6)}`,
+  const result = await pool.query(`
+    INSERT INTO audit_logs (action, user_id, role, entity_type, entity_id, metadata)
+    VALUES ($1, $2, $3, $4, $5, $6)
+    RETURNING *
+  `, [
     action,
-    userId: userId || null,
-    role: role || 'SYSTEM',
-    entityType: entityType || null,
-    entityId: entityId || null,
-    metadata: metadata || {},
-    createdAt: new Date().toISOString(),
-  });
-  // keep only latest 200 entries to avoid uncontrolled growth
-  const trimmed = logs.slice(-200);
-  await saveAuditLogs(trimmed);
-  return trimmed[trimmed.length - 1];
+    userId || null,
+    role || 'SYSTEM',
+    entityType || null,
+    entityId || null,
+    metadata || {},
+  ]);
+  
+  return result.rows[0];
 }
 
 async function listRecent(limit = 25) {
-  const logs = await getAuditLogs();
-  return logs.slice(-limit).reverse();
+  const result = await pool.query(`
+    SELECT 
+      a.*,
+      u.email as user_email,
+      u.organization as user_organization
+    FROM audit_logs a
+    LEFT JOIN users u ON a.user_id = u.id
+    ORDER BY a.created_at DESC
+    LIMIT $1
+  `, [limit]);
+  
+  return result.rows;
 }
 
 module.exports = {
   logAction,
   listRecent,
 };
-
-
-
-

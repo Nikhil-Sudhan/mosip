@@ -5,6 +5,7 @@ import Register from './pages/Register';
 import ExporterDashboard from './pages/exporter/ExporterDashboard';
 import NewBatch from './pages/exporter/NewBatch';
 import AdminDashboard from './pages/admin/AdminDashboard';
+import QADashboard from './pages/qa/QADashboard';
 import CustomsDashboard from './pages/customs/CustomsDashboard';
 import VerifyPortal from './pages/verify/VerifyPortal';
 import RoleRedirect from './pages/RoleRedirect';
@@ -23,8 +24,16 @@ function App() {
         <Route
           path="/admin"
           element={
-            <ProtectedRoute allowedRoles={['ADMIN', 'QA']}>
+            <ProtectedRoute allowedRoles={['ADMIN']}>
               <AdminDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/qa"
+          element={
+            <ProtectedRoute allowedRoles={['QA']}>
+              <QADashboard />
             </ProtectedRoute>
           }
         />

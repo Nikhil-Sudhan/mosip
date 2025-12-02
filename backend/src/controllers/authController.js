@@ -44,7 +44,7 @@ const login = asyncHandler(async (req, res) => {
   const payload = loginSchema.parse(req.body);
   const user = await findByEmail(payload.email);
 
-  if (!user || !user.isActive) {
+  if (!user) {
     return res.status(401).json({
       success: false,
       error: { code: 'INVALID_CREDENTIALS', message: 'Bad credentials' },

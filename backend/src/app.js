@@ -43,6 +43,7 @@ app.get('/api/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/batches', batchRoutes);
+app.use('/api/qa', require('./routes/qaRoutes'));
 app.use('/api/vc', credentialRoutes);
 app.use('/api/verify', verifyRoutes);
 
