@@ -19,90 +19,108 @@ Simple web portal that lets exporters submit agricultural batches, QA partners r
 
 ---
 
-### 1. Prerequisites
+## 🚀 Quick Start Guide
 
-- **PostgreSQL** (version 12 or higher)
-- **Node.js** (version 20 or higher)
-- **npm** or **yarn**
+### Option 1: Docker (Easiest - Recommended)
 
-### 2. Database Setup
-
-1. Create a PostgreSQL database:
-```bash
-createdb agriqcert
-# Or using psql:
-psql -U postgres
-CREATE DATABASE agriqcert;
-```
-
-2. Update database connection in `backend/.env`:
-```env
-DATABASE_URL=postgresql://postgres:postgres@localhost:5432/agriqcert
-```
-
-The database schema will be automatically created on first startup.
-
-### 3. Local development
+**Prerequisites**: Install [Docker Desktop](https://www.docker.com/products/docker-desktop/)
 
 ```bash
-# Install backend dependencies
-cd backend
-npm install
-
-# Create .env file (copy from .env.example if available)
-# Set DATABASE_URL and other required environment variables
-
-# Start backend (will auto-create database schema)
-npm run dev   # http://localhost:4000
-
-# In a second terminal - Install frontend dependencies
-cd ../frontend
-npm install
-
-# Start frontend
-npm run dev   # http://localhost:5173
-```
-
-The frontend talks to the backend using `VITE_API_BASE_URL` (defaults to `http://localhost:4000/api` in dev).
-
----
-
-### 2. Login credentials (demo defaults)
-
-- **Agency (Admin/QA/Customs)**  
-  - Email: `admin@gmail.com`  
-  - Password: `admin`
-
-- **Importers & Exporters**  
-  - Use the registration page to create new accounts  
-  - Or login with existing exporter/importer credentials
-
-- **Legacy Admin (optional)**  
-  - Email: `admin@agriqcert.test`  
-  - Password: `Admin@123`
-
-**For production**: change these default users right after the first login.
-
----
-
-### 3. Docker deployment (production-style)
-
-This runs the **API** and the **built frontend** together.
-
-```bash
+# Run everything with one command
 docker-compose up --build
 ```
 
-- API → `http://localhost:4000`
-- Web portal (built bundle) → `http://localhost:4173`
+**That's it!** The app will be available at:
+- **Frontend**: http://localhost:4173
+- **Backend API**: http://localhost:4000
 
-To customize for your server:
+---
 
-- **API secrets**: edit the `environment` block for the `api` service in `docker-compose.yml`  
-  - `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`  
-  - `DEFAULT_ADMIN_EMAIL`, `DEFAULT_ADMIN_PASSWORD`  
-  - `PUBLIC_URL`, `VERIFY_PORTAL_URL`
-- **Frontend base URL**: update `VITE_API_BASE_URL` build arg under the `web` service.
+### Option 2: Local Development (Step by Step)
+
+**Prerequisites**:
+- **Node.js** (version 20 or higher) - [Download here](https://nodejs.org/)
+- **npm** (comes with Node.js)
+
+#### Step 1: Install Backend Dependencies
+
+```bash
+cd backend
+npm install
+```
+
+#### Step 2: Start Backend Server
+
+```bash
+npm run dev
+```
+
+You should see: `AgriQCert API running on port 4000`
+
+**Keep this terminal open!**
+
+#### Step 3: Open a New Terminal - Install Frontend Dependencies
+
+```bash
+cd frontend
+npm install
+```
+
+#### Step 4: Start Frontend
+
+```bash
+npm run dev
+```
+
+You should see: `Local: http://localhost:5173`
+
+#### Step 5: Open in Browser
+
+Open http://localhost:5173 in your browser
+
+---
+
+### Login Credentials
+
+**Agency Login** (Admin/QA/Customs):
+- Email: `admin@gmail.com`
+- Password: `admin`
+
+**Importers & Exporters**:
+- Click "Create one here" on the login page to register a new account
+
+---
+
+## 📝 Troubleshooting
+
+**Backend won't start?**
+- Make sure port 4000 is not already in use
+- Check that you ran `npm install` in the `backend` folder
+
+**Frontend won't start?**
+- Make sure port 5173 is not already in use  
+- Check that you ran `npm install` in the `frontend` folder
+- Make sure the backend is running first (frontend needs the API)
+
+**Can't login?**
+- Make sure both backend and frontend are running
+- Try the default admin credentials: `admin@gmail.com` / `admin`
+
+---
+
+## 🐳 Docker Details
+
+Docker runs both the backend API and frontend together in containers.
+
+**To stop Docker:**
+```bash
+docker-compose down
+```
+
+**To rebuild after code changes:**
+```bash
+docker-compose up --build
+```
 
 ---
 
