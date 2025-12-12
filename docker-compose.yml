@@ -16,6 +16,10 @@ services:
       REFRESH_TOKEN_TTL: 7d
       DEFAULT_ADMIN_EMAIL: admin@agriqcert.test
       DEFAULT_ADMIN_PASSWORD: Admin@123
+      # Supabase Database Configuration
+      # Set these in your .env file or override here
+      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:Qwerty%40uiop%40123@db.gshvnhukuineedxnrtqx.supabase.co:5432/postgres}
+      DATABASE_SSL: ${DATABASE_SSL:-true}
     volumes:
       - ./backend/uploads:/app/uploads
       - ./backend/src/data:/app/src/data

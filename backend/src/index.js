@@ -23,9 +23,11 @@ async function start() {
     const seedResult = await seedAdminIfMissing();
     if (seedResult?.seeded) {
       // eslint-disable-next-line no-console
-      console.log(
-        `Seeded default admin user (${seedResult.credentials.email} / ${seedResult.credentials.password}). Please change the password.`
-      );
+      console.log('Seeded admin user(s):');
+      seedResult.credentials.forEach((cred) => {
+        console.log(`  - ${cred.email} / ${cred.password}`);
+      });
+      console.log('Please change these passwords after first login.');
     }
 
     // Clean up expired sessions on startup
@@ -36,7 +38,11 @@ async function start() {
       console.log(`AgriQCert API running on port ${config.port}`);
     });
   } catch (error) {
-    console.error('Failed to start server:', error);
+    console.error('\n❌ Failed to start server!\n');
+    console.error('Error details:', error.message);
+    if (error.code === 'ECONNREFUSED') {
+      console.error('\n💡 Tip: Make sure PostgreSQL is running and the database exists.');
+    }
     process.exit(1);
   }
 }

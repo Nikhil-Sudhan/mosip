@@ -1,11 +1,12 @@
-# AgriQCert Backend (Milestone 1)
+# AgriQCert Backend
 
-Simple Node.js API that powers milestone 1 (auth + role management) for the AgriQCert portal. It uses Express, JSON Web Tokens, and lightweight JSON files instead of a full database so you can demo quickly and swap in PostgreSQL later.
+Node.js API powered by Express, JSON Web Tokens, and PostgreSQL (Supabase).
 
 ## Prerequisites
 
 - Node.js 20+
 - npm 10+
+- Supabase account and project
 
 ## Setup
 
@@ -14,20 +15,32 @@ Simple Node.js API that powers milestone 1 (auth + role management) for the Agri
    cd backend
    npm install
    ```
-2. Copy the sample env file and update secrets if you like:
-   ```bash
-   copy .env.example .env   # use cp on mac/linux
-   ```
+
+2. Configure Supabase Database:
+   - Create a `.env` file in the `backend` directory
+   - Get your Supabase connection string from: **Supabase Dashboard > Settings > Database > Connection string**
+   - Add these lines to your `.env` file:
+     ```
+     DATABASE_URL=postgresql://postgres:[YOUR-PASSWORD]@[YOUR-PROJECT-REF].supabase.co:5432/postgres
+     DATABASE_SSL=true
+     ```
+   - Replace `[YOUR-PASSWORD]` with your database password
+   - Replace `[YOUR-PROJECT-REF]` with your Supabase project reference
+
 3. Start the dev server:
    ```bash
    npm run dev
    ```
 
-When the server boots it creates JSON stores under `backend/data/`:
+When the server boots, it automatically creates all required database tables in your Supabase database:
 
-- `users.json` – hashed passwords.
-- `sessions.json` – hashed refresh tokens.
-- `batches.json` – exporter batch submissions.
+- `users` – user accounts with hashed passwords
+- `sessions` – refresh token store
+- `batches` – exporter batch submissions
+- `qa_agencies` – QA agency profiles
+- `inspections` – inspection records
+- `credentials` – verifiable credentials
+- And more...
 
 Uploaded documents are saved to `backend/uploads/` (git ignored) and exposed via `/uploads/<filename>`.
 

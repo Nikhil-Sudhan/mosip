@@ -1,13 +1,19 @@
 const { Pool } = require('pg');
 const config = require('../config');
 
+// Debug: Show connection info (hide password)
+const connectionUrl = config.database.url;
+const maskedUrl = connectionUrl.replace(/:[^:@]+@/, ':****@');
+console.log('🔌 Attempting database connection:', maskedUrl);
+console.log('🔌 SSL enabled:', config.database.ssl);
+
 // Create PostgreSQL connection pool
 const pool = new Pool({
   connectionString: config.database.url,
   ssl: config.database.ssl ? { rejectUnauthorized: false } : false,
   max: 20,
   idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
+  connectionTimeoutMillis: 10000, // Increased timeout for Supabase
 });
 
 // Test connection
@@ -22,8 +28,9 @@ pool.on('error', (err) => {
 
 // Initialize database schema
 async function initSchema() {
-  const client = await pool.connect();
+  let client;
   try {
+    client = await pool.connect();
     await client.query('BEGIN');
 
     // Users table
@@ -209,11 +216,29 @@ async function initSchema() {
     await client.query('COMMIT');
     console.log('Database schema initialized successfully');
   } catch (error) {
-    await client.query('ROLLBACK');
-    console.error('Error initializing database schema:', error);
+    if (client) {
+      try {
+        await client.query('ROLLBACK');
+      } catch (rollbackError) {
+        // Ignore rollback errors
+      }
+      client.release();
+    }
+    
+    // Provide helpful error message for common issues
+    if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND') {
+      console.error('\n❌ ERROR: Cannot connect to PostgreSQL database!');
+      console.error('\n📋 To fix this:');
+      console.error('   1. For Supabase: Get your connection string from Supabase project settings');
+      console.error('   2. Create a .env file in the backend directory (copy from .env.example if available)');
+      console.error('   3. Set DATABASE_URL to your Supabase connection string');
+      console.error('   4. Set DATABASE_SSL=true (required for Supabase)');
+      console.error('   5. Format: postgresql://postgres:[PASSWORD]@[PROJECT-REF].supabase.co:5432/postgres\n');
+      console.error('Full error:', error.message);
+    } else {
+      console.error('Error initializing database schema:', error.message);
+    }
     throw error;
-  } finally {
-    client.release();
   }
 }
 

@@ -42,30 +42,58 @@ async function createUser({ email, password, role, organization }) {
 }
 
 async function seedAdminIfMissing() {
-  const result = await pool.query(
-    'SELECT id FROM users WHERE role = $1',
-    ['ADMIN']
+  const seededUsers = [];
+  
+  // Seed default admin (admin@agriqcert.test)
+  const defaultAdminCheck = await pool.query(
+    'SELECT id FROM users WHERE email = $1',
+    [config.defaultAdminEmail.toLowerCase()]
   );
-
-  if (result.rows.length === 0) {
+  
+  if (defaultAdminCheck.rows.length === 0) {
     const passwordHash = await hashPassword(config.defaultAdminPassword);
-    const adminResult = await pool.query(`
+    await pool.query(`
       INSERT INTO users (email, password_hash, role, organization)
       VALUES ($1, $2, $3, $4)
-      RETURNING id, email, role, organization
     `, [
       config.defaultAdminEmail.toLowerCase(),
       passwordHash,
       'ADMIN',
       'AgriQCert HQ',
     ]);
-    
+    seededUsers.push({
+      email: config.defaultAdminEmail,
+      password: config.defaultAdminPassword,
+    });
+  }
+
+  // Seed agency admin (admin@gmail.com) - required for frontend agency login
+  const agencyAdminCheck = await pool.query(
+    'SELECT id FROM users WHERE email = $1',
+    ['admin@gmail.com']
+  );
+  
+  if (agencyAdminCheck.rows.length === 0) {
+    const agencyPasswordHash = await hashPassword('admin');
+    await pool.query(`
+      INSERT INTO users (email, password_hash, role, organization)
+      VALUES ($1, $2, $3, $4)
+    `, [
+      'admin@gmail.com',
+      agencyPasswordHash,
+      'ADMIN',
+      'Agency Admin',
+    ]);
+    seededUsers.push({
+      email: 'admin@gmail.com',
+      password: 'admin',
+    });
+  }
+
+  if (seededUsers.length > 0) {
     return {
       seeded: true,
-      credentials: {
-        email: config.defaultAdminEmail,
-        password: config.defaultAdminPassword,
-      },
+      credentials: seededUsers,
     };
   }
 
