@@ -7,11 +7,7 @@
 A web portal for exporters to submit batches, QA partners to inspect and issue Verifiable Credentials, and importers/customs to verify credentials via QR code or JSON upload.
 
 [![Node.js](https://img.shields.io/badge/Node.js-20+-green.svg)](https://nodejs.org/)
-[![React](https://
-
-https://github.com/user-attachments/assets/94490aba-24c3-48e3-83c9-c9f0f26aa965
-
-img.shields.io/badge/React-19-blue.svg)](https://reactjs.org/)
+[![React](https://img.shields.io/badge/React-19-blue.svg)](https://reactjs.org/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-blue.svg)](https://www.postgresql.org/)
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](https://www.docker.com/)
 
@@ -20,6 +16,8 @@ img.shields.io/badge/React-19-blue.svg)](https://reactjs.org/)
 ---
 
 ## 🎥 Demo Video
+https://github.com/user-attachments/assets/94490aba-24c3-48e3-83c9-c9f0f26aa965
+
 
 <div align="center">
 
