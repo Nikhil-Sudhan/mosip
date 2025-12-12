@@ -15,6 +15,19 @@ A web portal for exporters to submit batches, QA partners to inspect and issue V
 
 ---
 
+## 🎥 Demo Video
+
+<div align="center">
+
+<video width="800" controls>
+  <source src="demo video.mp4" type="video/mp4">
+  Your browser does not support the video tag. [Download the video](demo%20video.mp4)
+</video>
+
+</div>
+
+---
+
 ## ✨ Features
 
 - **Role-Based Access**: Separate dashboards for Exporters, QA Agencies, Admins, and Customs/Importers
