@@ -1,245 +1,224 @@
 <div align="center">
 
-## AgriQCert Portal
+# AgriQCert Portal
 
-Simple web portal that lets exporters submit agricultural batches, QA partners record inspections, issue Verifiable Credentials (Digital Product Passports), and importers/customs verify credentials via QR or JSON upload.
+**Agricultural Quality Certification & Digital Product Passport System**
+
+A web portal for exporters to submit batches, QA partners to inspect and issue Verifiable Credentials, and importers/customs to verify credentials via QR code or JSON upload.
+
+[![Node.js](https://img.shields.io/badge/Node.js-20+-green.svg)](https://nodejs.org/)
+[![React](https://img.shields.io/badge/React-19-blue.svg)](https://reactjs.org/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-blue.svg)](https://www.postgresql.org/)
+[![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](https://www.docker.com/)
 
 </div>
 
-### Features
+---
 
-- **Dual Login System**: Separate login flows for Agency (Admin/QA/Customs) and Importers/Exporters
-- **User Registration**: Importers and Exporters can create accounts directly
-- **Role-based dashboards** for Exporter, QA/Admin, and Customs/Importer
-- **Batch workflow** with approval / rejection and full audit trail
-- **QA inspection workspace** with moisture/pesticide metrics
-- **Digital Product Passport (VC)** issuance with QR code + revocation
-- **Public verify page** for QR scanning or JSON upload
-- **Dockerized** backend (Express) and frontend (React + Vite)
+## ✨ Features
+
+- **Role-Based Access**: Separate dashboards for Exporters, QA Agencies, Admins, and Customs/Importers
+- **Batch Workflow**: Submit → QA Assignment → Inspection → Certification with full audit trail
+- **QA Inspection**: Record moisture, pesticide levels, organic status, ISO certifications
+- **Digital Product Passports**: W3C-compliant Verifiable Credentials with QR codes
+- **Verification Portal**: Public QR scanning and JSON upload for credential verification
+- **Inji Integration**: Production-ready VC issuance (Inji Certify) with wallet sharing (Inji Wallet)
+- **Fallback Mode**: Works without external services for development/testing
 
 ---
 
-## 🚀 Quick Start Guide
+## 🏗️ Architecture
 
-### Option 1: Docker (Easiest - Recommended)
+```
+React Frontend (Port 5173) ←→ Express Backend (Port 4000) ←→ PostgreSQL
+                                         ↓
+                                  Inji Services
+                                  (Certify/Wallet/Verify)
+```
 
-**Prerequisites**: Install [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+**Tech Stack**: React 19 + Vite, Express 5, PostgreSQL, Tailwind CSS, Zustand, React Query, JWT Auth
+
+---
+
+## 🚀 Quick Start
+
+### Option 1: Docker (Recommended)
 
 ```bash
-# Run everything with one command
 docker-compose up --build
 ```
 
-**That's it!** The app will be available at:
+Access at:
 - **Frontend**: http://localhost:4173
-- **Backend API**: http://localhost:4000
+- **Backend**: http://localhost:4000
 
----
+### Option 2: Local Development
 
-### Option 2: Local Development (Step by Step)
-
-**Prerequisites**:
-- **Node.js** (version 20 or higher) - [Download here](https://nodejs.org/)
-- **npm** (comes with Node.js)
-
-#### Step 1: Install Backend Dependencies
+**Prerequisites**: Node.js 20+, PostgreSQL database
 
 ```bash
+# Backend
 cd backend
 npm install
-```
-
-#### Step 2: Start Backend Server
-
-```bash
+# Create .env file (see Configuration below)
 npm run dev
-```
 
-You should see: `AgriQCert API running on port 4000`
-
-**Keep this terminal open!**
-
-#### Step 3: Open a New Terminal - Install Frontend Dependencies
-
-```bash
+# Frontend (new terminal)
 cd frontend
 npm install
-```
-
-#### Step 4: Start Frontend
-
-```bash
 npm run dev
 ```
 
-You should see: `Local: http://localhost:5173`
-
-#### Step 5: Open in Browser
-
-Open http://localhost:5173 in your browser
+Access at: http://localhost:5173
 
 ---
 
-### Login Credentials
+## ⚙️ Configuration
 
-**Agency Login** (Admin/QA/Customs):
-- Email: `admin@gmail.com`
-- Password: `admin`
-
-**Importers & Exporters**:
-- Click "Create one here" on the login page to register a new account
-
----
-
-## 📝 Troubleshooting
-
-**Backend won't start?**
-- Make sure port 4000 is not already in use
-- Check that you ran `npm install` in the `backend` folder
-
-**Frontend won't start?**
-- Make sure port 5173 is not already in use  
-- Check that you ran `npm install` in the `frontend` folder
-- Make sure the backend is running first (frontend needs the API)
-
-**Can't login?**
-- Make sure both backend and frontend are running
-- Try the default admin credentials: `admin@gmail.com` / `admin`
-
----
-
-## 🐳 Docker Details
-
-Docker runs both the backend API and frontend together in containers.
-
-**To stop Docker:**
-```bash
-docker-compose down
-```
-
-**To rebuild after code changes:**
-```bash
-docker-compose up --build
-```
-
----
-
-### 4. Project layout
-
-```text
-backend/   # Express API (auth, batches, VC, verification)
-frontend/  # React + Vite app with Tailwind UI
-docs/      # Architecture, API, and user-guide references
-docker-compose.yml
-```
-
----
-
-### 5. Batch + credential workflow
-
-1. **SUBMITTED** → Exporter submits batch with documents (product info, lab reports, images).
-2. **QA_ASSIGNED** → System automatically matches batch to a certified QA agency based on:
-   - Product type specialties
-   - Agency workload (round-robin)
-   - Agency availability
-3. **INSPECTION_SCHEDULED** → QA agency schedules physical or virtual inspection with date/time/location.
-4. **QA Inspection** → QA agency records inspection results:
-   - `PASS` → status becomes `INSPECTED` (ready for credential issuance)
-   - `FAIL` → status becomes `REJECTED` (cannot receive credential)
-5. **Credential Issuance** → QA/Admin issues Verifiable Credential (Digital Product Passport):
-   - VC issued via Inji Certify (if configured) or fallback method
-   - QR code generated for verification
-   - Credential automatically shared to exporter's Inji Wallet (if configured)
-6. **CERTIFIED** → Batch receives Digital Product Passport (VC) with QR code.
-
-**Important**: rejected batches are permanently blocked from credential issuance.
-
----
-
-### 6. VC generation and verification modes
-
-- **Production mode (Inji Certify)**  
-  - Configure `INJI_CERTIFY_BASE_URL`, `INJI_CERTIFY_API_KEY`, and `INJI_ISSUER_DID` in `.env`
-  - Configure `ESIGNET_*` variables for OAuth authentication
-  - VCs are issued with real cryptographic signatures via Inji Certify
-  - Credentials are automatically shared to exporter's Inji Wallet
-  - Verification uses Inji Verify API for signature validation
-
-- **Demo / fallback mode**  
-  - If Inji Certify is not configured, system uses fallback method
-  - Uses deterministic signature simulation for demos/testing
-  - Still generates valid W3C VC structure with QR codes
-  - Good for local development and testing without Inji services
-
----
-
-### 7. Documentation
-
-- `docs/architecture.md` – diagrams, components, VC flow
-- `docs/api.md` – endpoint reference + sample payloads
-- `docs/user-guide.md` – role-based walkthrough (Exporter, QA, Customs)
-- `AgriQCertDesign.md` – extended backlog & roadmap
-
----
-
-### 8. Tech stack
-
-- **Frontend**: React 19, Vite, Tailwind CSS, React Query, Zustand
-- **Backend**: Node.js 20, Express 5, PostgreSQL
-- **Database**: PostgreSQL (with automatic schema migration)
-- **VC Issuance**: Inji Certify integration (with fallback)
-- **VC Verification**: Inji Verify integration (with fallback)
-- **Wallet Integration**: Inji Wallet for credential sharing
-- **QR Code**: qrcode library for QR generation
-- **Authentication**: JWT with refresh tokens, eSignet OAuth support
-
----
-
-### 9. Testing & linting
-
-```bash
-cd backend && npm test
-cd frontend && npm run lint
-```
-
----
-
-### 10. Environment Variables
-
-Create a `.env` file in the `backend/` directory with the following variables:
+Create `.env` in `backend/`:
 
 ```env
 # Database
-DATABASE_URL=postgresql://user:password@localhost:5432/agriqcert
+DATABASE_URL=postgresql://user:password@host:5432/database
+DATABASE_SSL=true  # Required for Supabase/cloud databases
 
 # JWT Secrets (CHANGE IN PRODUCTION!)
 JWT_ACCESS_SECRET=your-secret-key
 JWT_REFRESH_SECRET=your-refresh-secret
 
-# Inji Certify (for VC issuance)
+# Default Admin (CHANGE IN PRODUCTION!)
+DEFAULT_ADMIN_EMAIL=admin@agriqcert.test
+DEFAULT_ADMIN_PASSWORD=Admin@123
+
+# Inji Services (Optional - for production VC issuance)
 INJI_CERTIFY_BASE_URL=https://certify.inji.io
 INJI_CERTIFY_API_KEY=your-api-key
 INJI_ISSUER_DID=did:mosip:your-issuer-id
-
-# Inji Wallet (for credential sharing)
 INJI_WALLET_BASE_URL=https://wallet.inji.io
 INJI_WALLET_API_KEY=your-api-key
-
-# Inji Verify (for credential verification)
 INJI_VERIFY_BASE_URL=https://verify.inji.io
 INJI_VERIFY_API_KEY=your-api-key
-
-# eSignet (for OAuth)
-ESIGNET_BASE_URL=https://esignet.mosip.io
-ESIGNET_CLIENT_ID=your-client-id
-ESIGNET_CLIENT_SECRET=your-secret
 ```
 
-### 11. Production checklist (minimum)
+Frontend: Create `.env` in `frontend/`:
+```env
+VITE_API_BASE_URL=http://localhost:4000/api
+```
 
-- **Secrets**: set strong values for `JWT_ACCESS_SECRET` and `JWT_REFRESH_SECRET`.
-- **Database**: ensure PostgreSQL is properly configured with backups
-- **Admin users**: log in with the default admin, create new admins, then **disable / change** the defaults.
-- **Inji Integration**: configure all Inji service URLs and API keys for production
-- **TLS**: run behind HTTPS (NGINX, reverse proxy, or a cloud load balancer).
-- **Monitoring**: add basic logging/metrics and regular database backups.
+---
+
+## 📁 Project Structure
+
+```
+mosip/
+├── backend/          # Express API
+│   ├── src/
+│   │   ├── controllers/   # Request handlers
+│   │   ├── services/      # Business logic
+│   │   ├── routes/        # API endpoints
+│   │   ├── middleware/    # Auth, error handling
+│   │   └── db/            # PostgreSQL schema
+│   └── .env
+├── frontend/         # React app
+│   ├── src/
+│   │   ├── pages/         # Dashboard pages
+│   │   ├── components/    # UI components
+│   │   └── api/           # API client
+│   └── .env
+└── docker-compose.yml
+```
+
+---
+
+## 🔄 Workflow
+
+1. **Exporter** submits batch with documents → Status: `SUBMITTED`
+2. **System** auto-assigns to QA agency → Status: `QA_ASSIGNED`
+3. **QA Agency** schedules and performs inspection → Status: `INSPECTED` (PASS) or `REJECTED` (FAIL)
+4. **QA/Admin** issues Verifiable Credential → Status: `CERTIFIED`
+5. **Public** verifies credential via QR scan or JSON upload
+
+---
+
+## 🔐 Authentication
+
+- **Roles**: `ADMIN`, `QA`, `EXPORTER`, `IMPORTER`, `CUSTOMS`
+- **JWT**: Access tokens (15min) + Refresh tokens (7 days, stored in DB)
+- **Default Admin**: `admin@agriqcert.test` / `Admin@123` ⚠️ Change in production!
+
+---
+
+## 🎫 Verifiable Credentials
+
+**Production Mode** (Inji Certify):
+- Real cryptographic signatures
+- Automatic wallet sharing
+- Verification via Inji Verify API
+
+**Fallback Mode** (Development):
+- Works without external services
+- Deterministic signature simulation
+- Valid W3C VC structure
+
+---
+
+## 🔌 API Endpoints
+
+- **Auth**: `/api/auth/login`, `/api/auth/register`, `/api/auth/refresh`
+- **Batches**: `/api/batches` (GET, POST), `/api/batches/:id`
+- **QA**: `/api/qa/batches`, `/api/qa/batches/:id/inspect`
+- **Credentials**: `/api/vc/issue`, `/api/vc/:id/qr`
+- **Verification**: `/api/verify` (public, no auth)
+
+---
+
+## 🚢 Production Checklist
+
+- [ ] Change JWT secrets and default admin credentials
+- [ ] Configure production PostgreSQL with SSL
+- [ ] Set up Inji service URLs and API keys
+- [ ] Enable HTTPS (NGINX/reverse proxy)
+- [ ] Configure secure file storage
+- [ ] Set up monitoring and backups
+
+---
+
+## 🔧 Troubleshooting
+
+**Backend won't start?**
+- Check port 4000 is available
+- Verify database connection in `.env`
+- Ensure `npm install` completed
+
+**Frontend won't start?**
+- Check port 5173 is available
+- Ensure backend is running
+- Verify `VITE_API_BASE_URL` in `.env`
+
+**Database connection errors?**
+- Verify `DATABASE_URL` is correct
+- Set `DATABASE_SSL=true` for Supabase/cloud
+- Check network connectivity
+
+**Can't login?**
+- Try default admin: `admin@agriqcert.test` / `Admin@123`
+- Check both backend and frontend are running
+- Verify JWT secrets in `.env`
+
+---
+
+## 📝 Default Credentials
+
+**Agency Login** (Admin/QA/Customs):
+- Email: `admin@agriqcert.test`
+- Password: `Admin@123`
+
+**Importers & Exporters**: Register via "Create one here" on login page
+
+---
+
+<div align="center">
+
+**Built with ❤️ for Agricultural Quality Certification**
+
+</div>
