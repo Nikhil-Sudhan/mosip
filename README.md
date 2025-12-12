@@ -6,6 +6,10 @@ Simple web portal that lets exporters submit agricultural batches, QA partners r
 
 </div>
 
+https://github.com/user-attachments/assets/604e1805-8b24-4d67-8f3b-cac13f42cebf
+
+
+
 ### Features
 
 - **Dual Login System**: Separate login flows for Agency (Admin/QA/Customs) and Importers/Exporters
